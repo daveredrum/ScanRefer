@@ -45,6 +45,17 @@ python batch_load_scannet_data.py
 ```
 4. Download the preprocessed [multiview features](http://kaldir.vc.in.tum.de/enet_feats.hdf5) and put it under `data/scannet_data`
 
+### Setup
+Install the necessary packages listed out in `requirements.txt`:
+```shell
+pip install -r requirements.txt
+```
+After all packages are properly installed, please run the following commands to compile the CUDA modules for the PointNet++ backbone:
+```shell
+cd lib/pointnet2
+python setup.py install
+```
+
 ### Training
 To train the ScanRefer model with multiview features:
 ```shell
