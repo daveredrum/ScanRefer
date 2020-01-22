@@ -1,0 +1,19 @@
+# dataset
+data/ScanRefer*
+data/glove*
+data/scannet_data/
+
+# cache
+data/scannet/__pycache__
+lib/__pycache__
+lib/pointnet2/__pycache__
+models/__pycache__
+utils/__pycache__
+
+# pointnet2
+lib/pointnet2/build/
+lib/pointnet2/dist/
+lib/pointnet2/pointnet2.egg-info/
+
+# output
+outputs/
