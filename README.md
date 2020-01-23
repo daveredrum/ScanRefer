@@ -46,7 +46,7 @@ After all packages are properly installed, please run the following commands to 
 cd lib/pointnet2
 python setup.py install
 ```
-Before moving on to the next step, please don't forget to set the current path to the `CONF.PATH.BASE` in `lib/config.py`.
+Before moving on to the next step, please don't forget to set the project root path to the `CONF.PATH.BASE` in `lib/config.py`.
 
 ### Data preparation
 1. Download the ScanRefer dataset and unzip it under `data/` 
