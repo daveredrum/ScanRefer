@@ -58,7 +58,7 @@ Before moving on to the next step, please don't forget to set the current path t
 cd data/scannet/
 python batch_load_scannet_data.py
 ```
-5. Download the preprocessed [multiview features](http://kaldir.vc.in.tum.de/enet_feats.hdf5) and put it under `data/scannet/sscannet_data/`
+5. Download the preprocessed [multiview features](http://kaldir.vc.in.tum.de/enet_feats.hdf5) and put it under `data/scannet/scannet_data/`
 
 ### Training
 To train the ScanRefer model with multiview features:
