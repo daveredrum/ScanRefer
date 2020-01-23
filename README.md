@@ -35,15 +35,6 @@ wget <download_link>
 ```
 
 ## Usage
-### Data preparation
-1. Download the ScanRefer dataset and the preprocessed [GLoVE embeddings](http://kaldir.vc.in.tum.de/glove.p), put them under `data/`
-2. Download the [ScanNetV2 dataset](https://github.com/ScanNet/ScanNet) and put (or link) `scans` under (or to) `data/scannet/scans`
-3. Pre-process ScanNet data:
-```shell
-cd data/scannet/
-python batch_load_scannet_data.py
-```
-4. Download the preprocessed [multiview features](http://kaldir.vc.in.tum.de/enet_feats.hdf5) and put it under `data/scannet_data`
 
 ### Setup
 Install the necessary packages listed out in `requirements.txt`:
@@ -55,6 +46,19 @@ After all packages are properly installed, please run the following commands to 
 cd lib/pointnet2
 python setup.py install
 ```
+Before moving on to the next step, please don't forget to set the current path to the `CONF.PATH.BASE` in `lib/config.py`.
+
+### Data preparation
+1. Download the ScanRefer dataset and unzip it under `data/` 
+2. Downloadand the preprocessed [GLoVE embeddings](http://kaldir.vc.in.tum.de/glove.p) and put them under `data/`
+3. Download the [ScanNetV2 dataset](https://github.com/ScanNet/ScanNet) and put (or link) `scans/` under (or to) `data/scannet/scans/`
+> After this step, there should be folders containing the ScanNet scene data under the `data/scannet/scans/` with names like `scene0000_00`
+4. Pre-process ScanNet data. A folder named `scannet_data/` will be generated under `data/scannet/` after running the following command:
+```shell
+cd data/scannet/
+python batch_load_scannet_data.py
+```
+5. Download the preprocessed [multiview features](http://kaldir.vc.in.tum.de/enet_feats.hdf5) and put it under `data/scannet/sscannet_data/`
 
 ### Training
 To train the ScanRefer model with multiview features:
