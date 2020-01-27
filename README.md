@@ -17,7 +17,7 @@ from [Technical University of Munich](https://www.tum.de/en/) and [Simon Fraser 
 
 If you would like to access to the ScanRefer dataset, please fill out [this form](https://forms.gle/aLtzXN12DsYDMSXX6). Once your request is accepted, you will receive an email with the download link.
 
-> Note: In addition to language annotations in ScanRefer dataset, you also need to access the original ScanNet dataset. Please refer to the [ScanNet project page](https://github.com/ScanNet/ScanNet) for more details.
+> Note: In addition to language annotations in ScanRefer dataset, you also need to access the original ScanNet dataset. Please refer to the [ScanNet Instructions](data/scannet/README.md) for more details.
 
 Download the dataset by simply executing the wget command:
 ```shell
@@ -46,38 +46,38 @@ After all packages are properly installed, please run the following commands to 
 cd lib/pointnet2
 python setup.py install
 ```
-Before moving on to the next step, please don't forget to set the project root path to the `CONF.PATH.BASE` in `lib/config.py`.
+__Before moving on to the next step, please don't forget to set the project root path to the `CONF.PATH.BASE` in `lib/config.py`.__
 
 ### Data preparation
-1. Download the ScanRefer dataset and unzip it under `data/` 
-2. Downloadand the preprocessed [GLoVE embeddings](http://kaldir.vc.in.tum.de/glove.p) and put them under `data/`
-3. Download the [ScanNetV2 dataset](https://github.com/ScanNet/ScanNet) and put (or link) `scans/` under (or to) `data/scannet/scans/`
+1. Download the ScanRefer dataset and unzip it under `data/`. 
+2. Downloadand the preprocessed [GLoVE embeddings (~990MB)](http://kaldir.vc.in.tum.de/glove.p) and put them under `data/`.
+3. Download the ScanNetV2 dataset and put (or link) `scans/` under (or to) `data/scannet/scans/` (Please follow the [ScanNet Instructions](data/scannet/README.md) for downloading the ScanNet dataset).
 > After this step, there should be folders containing the ScanNet scene data under the `data/scannet/scans/` with names like `scene0000_00`
-4. Pre-process ScanNet data. A folder named `scannet_data/` will be generated under `data/scannet/` after running the following command:
+4. Pre-process ScanNet data. A folder named `scannet_data/` will be generated under `data/scannet/` after running the following command. Roughly 3.8GB free space is needed for this step:
 ```shell
 cd data/scannet/
 python batch_load_scannet_data.py
 ```
-5. Download the preprocessed [multiview features](http://kaldir.vc.in.tum.de/enet_feats.hdf5) and put it under `data/scannet/scannet_data/`
+5. (Optional) Download the preprocessed [multiview features (~36GB)](http://kaldir.vc.in.tum.de/enet_feats.hdf5) and put it under `data/scannet/scannet_data/`.
 
 ### Training
-To train the ScanRefer model with multiview features:
+To train the ScanRefer model with RGB values:
 ```shell
-python scripts/train.py --use_multiview
+python scripts/train.py --use_color
 ```
-For more training options, please run `scripts/train.py -h`.
+For more training options (like using preprocessed multiview features), please run `scripts/train.py -h`.
 
 ### Evaluation
 To evaluate the trained ScanRefer models, please find the folder under `outputs/` with the current timestamp and run:
 ```shell
-python scripts/eval.py --folder <folder_name> --use_multiview
+python scripts/eval.py --folder <folder_name> --use_color
 ```
 Note that the flags must match the ones set before training. The training information is stored in `outputs/<folder_name>/info.json`
 
 ### Visualize
 To predict the localization results predicted by the trained ScanRefer model in a specific scene, please find the corresponding folder under `outputs/` with the current timestamp and run:
 ```shell
-python scripts/visualize.py --folder <folder_name> --scene_id <scene_id> --use_multiview
+python scripts/visualize.py --folder <folder_name> --scene_id <scene_id> --use_color
 ```
 Note that the flags must match the ones set before training. The training information is stored in `outputs/<folder_name>/info.json`. The output `.ply` files will be stored under `vis/<scene_id>/`
 
