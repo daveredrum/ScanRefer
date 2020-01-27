@@ -64,7 +64,7 @@ def get_num_params(model):
 def get_solver(args, dataloader, stamp):
     model = get_model(args)
     optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.wd)
-    lang_cls_flag = bool(int(not args.no_lang_cls) * int(args.num_attn_heads == 0))
+    lang_cls_flag = not args.no_lang_cls
     solver = Solver(model, DC, dataloader, optimizer, stamp, args.val_step, lang_cls_flag, (not args.no_max_iou))
     num_params = get_num_params(model)
 

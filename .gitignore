@@ -1,7 +1,8 @@
 # dataset
 data/ScanRefer*
 data/glove*
-data/scannet_data/
+data/scannet/scannet_data
+data/scannet/scans
 
 # cache
 data/scannet/__pycache__

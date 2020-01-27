@@ -88,12 +88,12 @@ class ScannetReferenceDataset(Dataset):
             normals = mesh_vertices[:,6:9]
             point_cloud = np.concatenate([point_cloud, normals],1)
 
-        # load multiview database
-        pid = mp.current_process().pid
-        if pid not in self.multiview_data:
-            self.multiview_data[pid] = h5py.File(MULTIVIEW_DATA, "r", libver="latest")
-
         if self.use_multiview:
+            # load multiview database
+            pid = mp.current_process().pid
+            if pid not in self.multiview_data:
+                self.multiview_data[pid] = h5py.File(MULTIVIEW_DATA, "r", libver="latest")
+
             multiview = self.multiview_data[pid][scene_id]
             point_cloud = np.concatenate([point_cloud, multiview],1)
 
@@ -183,6 +183,11 @@ class ScannetReferenceDataset(Dataset):
         for i, gt_id in enumerate(instance_bboxes[:num_bbox,-1]):
             if gt_id == object_id:
                 ref_box_label[i] = 1
+                ref_center_label = target_bboxes[i, 0:3]
+                ref_heading_class_label = angle_classes[i]
+                ref_heading_residual_label = angle_residuals[i]
+                ref_size_class_label = size_classes[i]
+                ref_size_residual_label = size_residuals[i]
             
         data_dict = {}
         data_dict["point_clouds"] = point_cloud.astype(np.float32) # point cloud data including features
@@ -203,6 +208,12 @@ class ScannetReferenceDataset(Dataset):
         data_dict["scan_idx"] = np.array(idx).astype(np.int64)
         data_dict["pcl_color"] = pcl_color
         data_dict["ref_box_label"] = ref_box_label.astype(np.int64) # 0/1 reference labels for each object bbox
+        data_dict["ref_box_label"] = ref_box_label.astype(np.int64) # 0/1 reference labels for each object bbox
+        data_dict["ref_center_label"] = ref_center_label.astype(np.float32)
+        data_dict["ref_heading_class_label"] = np.array(int(ref_heading_class_label)).astype(np.int64)
+        data_dict["ref_heading_residual_label"] = np.array(int(ref_heading_residual_label)).astype(np.int64)
+        data_dict["ref_size_class_label"] = np.array(int(ref_size_class_label)).astype(np.int64)
+        data_dict["ref_size_residual_label"] = ref_size_residual_label.astype(np.float32)
         data_dict["object_id"] = np.array(int(object_id)).astype(np.int64)
         data_dict["ann_id"] = np.array(int(ann_id)).astype(np.int64)
         data_dict["object_cat"] = np.array(self.raw2label[object_name]).astype(np.int64)
