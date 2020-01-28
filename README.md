@@ -34,9 +34,13 @@ wget <download_link>
 "token": [a list of tokens from the tokenized description] 
 ```
 
-## Usage
+## Setup
+The code is tested on Ubuntu 16.04 LTS & 18.04 LTS with PyTorch 1.2.0 CUDA 10.0 installed. There are some issues with the newer version (>=1.3.0) of PyTorch. You might want to make sure you have installed the correct version. Otherwise, please execute the following command to install PyTorch:
 
-### Setup
+```shell
+conda install pytorch==1.2.0 torchvision==0.4.0 cudatoolkit=10.0 -c pytorch
+```
+
 Install the necessary packages listed out in `requirements.txt`:
 ```shell
 pip install -r requirements.txt
@@ -60,6 +64,7 @@ python batch_load_scannet_data.py
 ```
 5. (Optional) Download the preprocessed [multiview features (~36GB)](http://kaldir.vc.in.tum.de/enet_feats.hdf5) and put it under `data/scannet/scannet_data/`.
 
+## Usage
 ### Training
 To train the ScanRefer model with RGB values:
 ```shell
