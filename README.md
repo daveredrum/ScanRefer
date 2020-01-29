@@ -79,7 +79,7 @@ python scripts/eval.py --folder <folder_name> --use_color
 ```
 Note that the flags must match the ones set before training. The training information is stored in `outputs/<folder_name>/info.json`
 
-### Visualize
+### Visualization
 To predict the localization results predicted by the trained ScanRefer model in a specific scene, please find the corresponding folder under `outputs/` with the current timestamp and run:
 ```shell
 python scripts/visualize.py --folder <folder_name> --scene_id <scene_id> --use_color

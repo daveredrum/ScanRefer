@@ -29,7 +29,7 @@ from lib.config import CONF
 SCANNET_ROOT = "/mnt/canis/Datasets/ScanNet/public/v2/scans/" # TODO point this to your scannet data
 SCANNET_MESH = os.path.join(SCANNET_ROOT, "{}/{}_vh_clean_2.ply") # scene_id, scene_id 
 SCANNET_META = os.path.join(SCANNET_ROOT, "{}/{}.txt") # scene_id, scene_id 
-SCANREFER = json.load(open(os.path.join(CONF.PATH.OUTPUT, "ScanRefer_filtered_val.json")))
+SCANREFER = json.load(open(os.path.join(CONF.PATH.DATA, "ScanRefer_filtered_val.json")))
 
 # constants
 MEAN_COLOR_RGB = np.array([109.8, 97.2, 83.8])
@@ -37,7 +37,6 @@ DC = ScannetDatasetConfig()
 
 def get_dataloader(args, scanrefer, all_scene_list, split, config, augment):
     dataset = ScannetReferenceDataset(
-        debug=False,
         scanrefer=scanrefer, 
         scanrefer_all_scene=all_scene_list, 
         split=split, 
@@ -45,7 +44,7 @@ def get_dataloader(args, scanrefer, all_scene_list, split, config, augment):
         use_color=args.use_color, 
         use_height=(not args.no_height),
         use_normal=args.use_normal, 
-        use_multiview=args.use_multiview,
+        use_multiview=args.use_multiview
     )
 
     dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False)
@@ -452,11 +451,11 @@ if __name__ == "__main__":
     parser.add_argument('--num_proposals', type=int, default=256, help='Proposal number [default: 256]')
     parser.add_argument('--num_scenes', type=int, default=-1, help='Number of scenes [default: -1]')
     parser.add_argument('--no_height', action='store_true', help='Do NOT use height signal in input.')
+    parser.add_argument('--no_nms', action='store_true', help='do NOT use non-maximum suppression for post-processing.')
     parser.add_argument('--use_color', action='store_true', help='Use RGB color in input.')
     parser.add_argument('--use_normal', action='store_true', help='Use RGB color in input.')
     parser.add_argument('--use_multiview', action='store_true', help='Use multiview images.')
     args = parser.parse_args()
-    if args.use_softmax_classifier: assert not args.no_separate
 
     # setting
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
