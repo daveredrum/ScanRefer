@@ -84,7 +84,7 @@ To predict the localization results predicted by the trained ScanRefer model in 
 ```shell
 python scripts/visualize.py --folder <folder_name> --scene_id <scene_id> --use_color
 ```
-Note that the flags must match the ones set before training. The training information is stored in `outputs/<folder_name>/info.json`. The output `.ply` files will be stored under `vis/<scene_id>/`
+Note that the flags must match the ones set before training. The training information is stored in `outputs/<folder_name>/info.json`. The output `.ply` files will be stored under `outputs/<folder_name>/vis/<scene_id>/`
 
 ## Citation
 
