@@ -29,7 +29,8 @@ from lib.config import CONF
 SCANNET_ROOT = "/mnt/canis/Datasets/ScanNet/public/v2/scans/" # TODO point this to your scannet data
 SCANNET_MESH = os.path.join(SCANNET_ROOT, "{}/{}_vh_clean_2.ply") # scene_id, scene_id 
 SCANNET_META = os.path.join(SCANNET_ROOT, "{}/{}.txt") # scene_id, scene_id 
-SCANREFER = json.load(open(os.path.join(CONF.PATH.DATA, "ScanRefer_filtered_val.json")))
+SCANREFER_TRAIN = json.load(open(os.path.join(CONF.PATH.DATA, "ScanRefer_filtered_train.json")))
+SCANREFER_VAL = json.load(open(os.path.join(CONF.PATH.DATA, "ScanRefer_filtered_val.json")))
 
 # constants
 MEAN_COLOR_RGB = np.array([109.8, 97.2, 83.8])
@@ -70,8 +71,10 @@ def get_model(args):
     return model
 
 def get_scanrefer(args):
-    scanrefer = SCANREFER
+    scanrefer = SCANREFER_TRAIN if args.use_train else SCANREFER_VAL
+    all_scene_list = sorted(list(set([data["scene_id"] for data in scanrefer])))
     if args.scene_id:
+        assert args.scene_id in all_scene_list, "The scene_id is not found"
         scene_list = [args.scene_id]
     else:
         scene_list = sorted(list(set([data["scene_id"] for data in scanrefer])))
@@ -452,6 +455,7 @@ if __name__ == "__main__":
     parser.add_argument('--num_scenes', type=int, default=-1, help='Number of scenes [default: -1]')
     parser.add_argument('--no_height', action='store_true', help='Do NOT use height signal in input.')
     parser.add_argument('--no_nms', action='store_true', help='do NOT use non-maximum suppression for post-processing.')
+    parser.add_argument('--use_train', action='store_true', help='Use the training set.')
     parser.add_argument('--use_color', action='store_true', help='Use RGB color in input.')
     parser.add_argument('--use_normal', action='store_true', help='Use RGB color in input.')
     parser.add_argument('--use_multiview', action='store_true', help='Use multiview images.')

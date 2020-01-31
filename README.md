@@ -86,6 +86,11 @@ python scripts/visualize.py --folder <folder_name> --scene_id <scene_id> --use_c
 ```
 Note that the flags must match the ones set before training. The training information is stored in `outputs/<folder_name>/info.json`. The output `.ply` files will be stored under `outputs/<folder_name>/vis/<scene_id>/`
 
+## Changelog
+01/31/2020: Fixed the issue with bad tokens.
+
+01/21/2020: Released the ScanRefer dataset.
+
 ## Citation
 
 If you use the ScanRefer data or code in your work, please kindly cite our work and the original ScanNet paper:
