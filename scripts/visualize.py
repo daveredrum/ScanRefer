@@ -17,6 +17,7 @@ from plyfile import PlyData, PlyElement
 
 sys.path.append(os.path.join(os.getcwd())) # HACK add the root folder
 from utils.pc_utils import write_ply_rgb, write_oriented_bbox
+from utils.box_util import get_3d_box, box3d_iou
 from models.refnet import RefNet
 from data.scannet.model_util_scannet import ScannetDatasetConfig
 from lib.dataset import ScannetReferenceDataset
@@ -229,7 +230,7 @@ def write_bbox(bbox, mode, output_file):
 
         return corners
 
-    radius = 0.05
+    radius = 0.03
     offset = [0,0,0]
     verts = []
     indices = []
@@ -239,9 +240,8 @@ def write_bbox(bbox, mode, output_file):
     box_min = np.min(corners, axis=0)
     box_max = np.max(corners, axis=0)
     palette = {
-        0: [255, 0, 0],
-        1: [0, 255, 0],
-        2: [255, 255, 255]
+        0: [0, 255, 0], # gt
+        1: [0, 0, 255]  # pred
     }
     chosen_color = palette[mode]
     edges = get_bbox_edges(box_min, box_max)
@@ -367,7 +367,7 @@ def dump_results(args, scanrefer, data, config):
         scene_id = scanrefer[idx]["scene_id"]
         object_id = scanrefer[idx]["object_id"]
         object_name = scanrefer[idx]["object_name"]
-        anno_id = scanrefer[idx]["anno_id"]
+        ann_id = scanrefer[idx]["ann_id"]
     
         # scene_output
         scene_dump_dir = os.path.join(dump_dir, scene_id)
@@ -380,6 +380,20 @@ def dump_results(args, scanrefer, data, config):
 
             write_ply_rgb(point_clouds[i], pcl_color[i], os.path.join(scene_dump_dir, 'pc.ply'))
 
+         # filter out the valid ground truth reference box
+        assert gt_ref_labels[i].shape[0] == gt_center[i].shape[0]
+        gt_ref_idx = np.argmax(gt_ref_labels[i], 0)
+
+        # visualize the gt reference box
+        # NOTE: for each object there should be only one gt reference box
+        object_dump_dir = os.path.join(dump_dir, scene_id, "gt_{}_{}.ply".format(object_id, object_name))
+        gt_obb = config.param2obb(gt_center[i, gt_ref_idx, 0:3], gt_heading_class[i, gt_ref_idx], gt_heading_residual[i, gt_ref_idx],
+                gt_size_class[i, gt_ref_idx], gt_size_residual[i, gt_ref_idx])
+        gt_bbox = get_3d_box(gt_obb[3:6], gt_obb[6], gt_obb[0:3])
+
+        if not os.path.exists(object_dump_dir):
+            write_bbox(gt_obb, 0, os.path.join(scene_dump_dir, 'gt_{}_{}.ply'.format(object_id, object_name)))
+        
         # find the valid reference prediction
         pred_masks = nms_masks[i] * pred_objectness[i] == 1
         assert pred_ref_scores[i].shape[0] == pred_center[i].shape[0]
@@ -387,23 +401,12 @@ def dump_results(args, scanrefer, data, config):
         assigned_gt = torch.gather(data["ref_box_label"], 1, data["object_assignment"]).detach().cpu().numpy()
 
         # visualize the predicted reference box
-        obb = config.param2obb(pred_center[i, pred_ref_idx, 0:3], pred_heading_class[i, pred_ref_idx], pred_heading_residual[i, pred_ref_idx],
+        pred_obb = config.param2obb(pred_center[i, pred_ref_idx, 0:3], pred_heading_class[i, pred_ref_idx], pred_heading_residual[i, pred_ref_idx],
                 pred_size_class[i, pred_ref_idx], pred_size_residual[i, pred_ref_idx])
-       
-        write_bbox(obb, assigned_gt[i, pred_ref_idx], os.path.join(scene_dump_dir, 'pred_{}_{}_{}_{:.5f}_{}.ply'.format(object_id, object_name, anno_id, pred_ref_scores_softmax[i, pred_ref_idx], assigned_gt[i, pred_ref_idx])))
+        pred_bbox = get_3d_box(pred_obb[3:6], pred_obb[6], pred_obb[0:3])
+        iou, _ = box3d_iou(gt_bbox, pred_bbox)
 
-        # filter out the valid ground truth reference box
-        assert gt_ref_labels[i].shape[0] == gt_center[i].shape[0]
-        gt_ref_idx = np.argmax(gt_ref_labels[i], 0)
-
-        # visualize the gt reference box
-        # NOTE: for each object there should be only one gt reference box
-        object_dump_dir = os.path.join(dump_dir, scene_id, "gt_{}_{}.ply".format(object_id, object_name))
-        if not os.path.exists(object_dump_dir):
-            obb = config.param2obb(gt_center[i, gt_ref_idx, 0:3], gt_heading_class[i, gt_ref_idx], gt_heading_residual[i, gt_ref_idx],
-                    gt_size_class[i, gt_ref_idx], gt_size_residual[i, gt_ref_idx])
-
-            write_bbox(obb, 2, os.path.join(scene_dump_dir, 'gt_{}_{}.ply'.format(object_id, object_name)))
+        write_bbox(pred_obb, 1, os.path.join(scene_dump_dir, 'pred_{}_{}_{}_{:.5f}_{:.5f}.ply'.format(object_id, object_name, ann_id, pred_ref_scores_softmax[i, pred_ref_idx], iou)))
 
 def visualize(args):
     # init training dataset
