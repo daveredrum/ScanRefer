@@ -62,7 +62,27 @@ __Before moving on to the next step, please don't forget to set the project root
 cd data/scannet/
 python batch_load_scannet_data.py
 ```
-5. (Optional) Download the preprocessed [multiview features (~36GB)](http://kaldir.vc.in.tum.de/enet_feats.hdf5) and put it under `data/scannet/scannet_data/`.
+<!-- 5. (Optional) Download the preprocessed [multiview features (~36GB)](http://kaldir.vc.in.tum.de/enet_feats.hdf5) and put it under `data/scannet/scannet_data/`. -->
+5. (Optional) Pre-process the multiview features from ENet. 
+
+    a. Download and decompress [the extracted ScanNet frames (~13GB)](http://kaldir.vc.in.tum.de/3dsis/scannet_train_images.zip).
+
+    b. Change the data paths in `config.py` marked with __TODO__ accordingly.
+
+    c. Extract the ENet features
+    ```shell
+    python script/compute_multiview_features.py
+    ```
+
+    d. Pre-compute the point-to-pixel mappings:
+    ```shell
+    python script/compute_multiview_projections.py
+    ```
+
+    e. Project ENet features from ScanNet frames to point clouds; you need ~36GB to store the generated HDF5 database.
+    ```shell
+    python script/project_multiview_features.py
+    ```
 
 ## Usage
 ### Training
@@ -87,6 +107,8 @@ python scripts/visualize.py --folder <folder_name> --scene_id <scene_id> --use_c
 Note that the flags must match the ones set before training. The training information is stored in `outputs/<folder_name>/info.json`. The output `.ply` files will be stored under `outputs/<folder_name>/vis/<scene_id>/`
 
 ## Changelog
+06/16/2020: Fixed the issue with multiview features.
+
 01/31/2020: Fixed the issue with bad tokens.
 
 01/21/2020: Released the ScanRefer dataset.

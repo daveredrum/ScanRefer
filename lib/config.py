@@ -22,9 +22,21 @@ CONF.PATH.SCANNET_SCANS = os.path.join(CONF.PATH.SCANNET, "scans")
 CONF.PATH.SCANNET_META = os.path.join(CONF.PATH.SCANNET, "meta_data")
 CONF.PATH.SCANNET_DATA = os.path.join(CONF.PATH.SCANNET, "scannet_data")
 
+# data
+CONF.SCANNET_DIR =  "/mnt/canis/Datasets/ScanNet/public/v2/scans" # TODO change this
+CONF.SCANNET_FRAMES_ROOT = "/home/davech2y/frames_square/" # TODO change this
+CONF.PROJECTION = "/home/davech2y/multiview_projection_scanrefer" # TODO change this
+CONF.ENET_FEATURES_ROOT = "/home/davech2y/enet_features" # TODO change this
+CONF.ENET_FEATURES_SUBROOT = os.path.join(CONF.ENET_FEATURES_ROOT, "{}") # scene_id
+CONF.ENET_FEATURES_PATH = os.path.join(CONF.ENET_FEATURES_SUBROOT, "{}.npy") # frame_id
+CONF.SCANNET_FRAMES = os.path.join(CONF.SCANNET_FRAMES_ROOT, "{}/{}") # scene_id, mode 
+CONF.SCENE_NAMES = sorted(os.listdir(CONF.SCANNET_DIR))
+CONF.ENET_WEIGHTS = os.path.join(CONF.PATH.BASE, "data/scannetv2_enet.pth")
+CONF.MULTIVIEW = os.path.join(CONF.PATH.SCANNET_DATA, "enet_feats.hdf5")
+
 # output
 CONF.PATH.OUTPUT = os.path.join(CONF.PATH.BASE, "outputs")
 
 # train
 CONF.TRAIN = EasyDict()
-CONF.TRAIN.MAX_DES_LEN = 30
+CONF.TRAIN.MAX_DES_LEN = 126

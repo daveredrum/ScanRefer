@@ -27,8 +27,6 @@ MEAN_COLOR_RGB = np.array([109.8, 97.2, 83.8])
 SCANNET_V2_TSV = os.path.join(CONF.PATH.SCANNET_META, "scannetv2-labels.combined.tsv")
 MULTIVIEW_DATA = os.path.join(CONF.PATH.SCANNET_DATA, "enet_feats.hdf5")
 GLOVE_PICKLE = os.path.join(CONF.PATH.DATA, "glove.p")
-# MAX_DES_LEN = 30
-# MAX_DES_LEN = 117
 
 class ScannetReferenceDataset(Dataset):
        
@@ -294,10 +292,6 @@ class ScannetReferenceDataset(Dataset):
             self.scene_data[scene_id]["instance_labels"] = np.load(os.path.join(CONF.PATH.SCANNET_DATA, scene_id)+"_ins_label.npy")
             self.scene_data[scene_id]["semantic_labels"] = np.load(os.path.join(CONF.PATH.SCANNET_DATA, scene_id)+"_sem_label.npy")
             self.scene_data[scene_id]["instance_bboxes"] = np.load(os.path.join(CONF.PATH.SCANNET_DATA, scene_id)+"_bbox.npy")
-
-        # # load multiview database
-        # if self.use_multiview:
-        #     self.multiview_database = h5py.File(MULTIVIEW_DATA, "r", libver="latest")
 
         # prepare class mapping
         lines = [line.rstrip() for line in open(SCANNET_V2_TSV)]
