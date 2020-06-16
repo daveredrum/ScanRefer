@@ -333,7 +333,7 @@ def dump_results(args, scanrefer, data, config):
 
     pcl_color = data["pcl_color"].detach().cpu().numpy()
     if args.use_color:
-        pcl_color = (data["pcl_color"] * 256 + MEAN_COLOR_RGB).astype(np.int64)
+        pcl_color = (pcl_color * 256 + MEAN_COLOR_RGB).astype(np.int64)
     
     # from network outputs
     # detection
