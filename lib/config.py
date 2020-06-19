@@ -34,9 +34,16 @@ CONF.SCENE_NAMES = sorted(os.listdir(CONF.SCANNET_DIR))
 CONF.ENET_WEIGHTS = os.path.join(CONF.PATH.BASE, "data/scannetv2_enet.pth")
 CONF.MULTIVIEW = os.path.join(CONF.PATH.SCANNET_DATA, "enet_feats.hdf5")
 
+# scannet
+CONF.SCANNETV2_TRAIN = os.path.join(CONF.PATH.SCANNET_META, "scannetv2_train.txt")
+CONF.SCANNETV2_VAL = os.path.join(CONF.PATH.SCANNET_META, "scannetv2_val.txt")
+CONF.SCANNETV2_TEST = os.path.join(CONF.PATH.SCANNET_META, "scannetv2_test.txt")
+CONF.SCANNETV2_LIST = os.path.join(CONF.PATH.SCANNET_META, "scannetv2.txt")
+
 # output
 CONF.PATH.OUTPUT = os.path.join(CONF.PATH.BASE, "outputs")
 
 # train
 CONF.TRAIN = EasyDict()
 CONF.TRAIN.MAX_DES_LEN = 126
+CONF.TRAIN.SEED = 42
