@@ -71,7 +71,7 @@ python batch_load_scannet_data.py
 
     c. Change the data paths in `config.py` marked with __TODO__ accordingly.
 
-    d. Extract the ENet features
+    d. Extract the ENet features:
     ```shell
     python script/compute_multiview_features.py
     ```
@@ -81,7 +81,7 @@ python batch_load_scannet_data.py
     python script/compute_multiview_projections.py
     ```
 
-    f. Project ENet features from ScanNet frames to point clouds; you need ~36GB to store the generated HDF5 database.
+    f. Project ENet features from ScanNet frames to point clouds; you need ~36GB to store the generated HDF5 database:
     ```shell
     python script/project_multiview_features.py
     ```
