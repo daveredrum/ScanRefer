@@ -114,7 +114,31 @@ class Solver():
 
         # log
         # contains all necessary info for all phases
-        self._reset_log()
+        self.log = {
+            phase: {
+                # info
+                "forward": [],
+                "backward": [],
+                "eval": [],
+                "fetch": [],
+                "iter_time": [],
+                # loss (float, not torch.cuda.FloatTensor)
+                "loss": [],
+                "ref_loss": [],
+                "lang_loss": [],
+                "objectness_loss": [],
+                "vote_loss": [],
+                "box_loss": [],
+                # scores (float, not torch.cuda.FloatTensor)
+                "lang_acc": [],
+                "ref_acc": [],
+                "obj_acc": [],
+                "pos_ratio": [],
+                "neg_ratio": [],
+                "iou_rate_0.25": [],
+                "iou_rate_0.5": []
+            } for phase in ["train", "val"]
+        }
         
         # tensorboard
         os.makedirs(os.path.join(CONF.PATH.OUTPUT, stamp, "tensorboard/train"), exist_ok=True)
@@ -165,33 +189,6 @@ class Solver():
 
         # finish training
         self._finish(epoch_id)
-
-    def _reset_log(self):
-        self.log = {
-            phase: {
-                # info
-                "forward": [],
-                "backward": [],
-                "eval": [],
-                "fetch": [],
-                "iter_time": [],
-                # loss (float, not torch.cuda.FloatTensor)
-                "loss": [],
-                "ref_loss": [],
-                "lang_loss": [],
-                "objectness_loss": [],
-                "vote_loss": [],
-                "box_loss": [],
-                # scores (float, not torch.cuda.FloatTensor)
-                "lang_acc": [],
-                "ref_acc": [],
-                "obj_acc": [],
-                "pos_ratio": [],
-                "neg_ratio": [],
-                "iou_rate_0.25": [],
-                "iou_rate_0.5": []
-            } for phase in ["train", "val"]
-        }
 
     def _log(self, info_str):
         self.log_fout.write(info_str + "\n")
