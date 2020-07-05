@@ -3,6 +3,7 @@ data/ScanRefer*
 data/glove*
 data/scannet/scannet_data
 data/scannet/scans
+data/scannetv2_enet.pth
 
 # cache
 data/scannet/__pycache__
