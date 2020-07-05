@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import math
 import numpy as np
 import argparse
@@ -7,7 +8,6 @@ import torch
 import torchvision.transforms as transforms
 from imageio import imread
 from PIL import Image
-from tqdm import tqdm
 
 sys.path.append(os.path.join(os.getcwd())) # HACK add the root folder
 
@@ -15,6 +15,7 @@ import data.scannet.scannet_utils as scannet_utils
 
 from lib.config import CONF
 from lib.projection import ProjectionHelper
+from lib.utils import get_eta
 
 # data path
 SCANNET_LIST = CONF.SCANNETV2_LIST
@@ -110,7 +111,10 @@ def compute_projection(points, depth, camera_to_world):
         if indices:
             indices_3ds[i] = indices[0].long()
             indices_2ds[i] = indices[1].long()
-        
+            print("found {} projections from frame {} to {} points".format(indices_3ds[i][0], i, num_points))
+        else:
+            print("skipped frame {}".format(i))
+
     return indices_3ds, indices_2ds
 
 if __name__ == "__main__":
@@ -128,10 +132,13 @@ if __name__ == "__main__":
     scene_data = load_scene(scene_list)
 
     print("computing multiview projections...")
-    for scene_id in tqdm(scene_list):
+    for idx, scene_id in enumerate(scene_list):
         # if os.path.exists(PROJECTION_PATH.format(scene_id, "3d")) and os.path.exists(PROJECTION_PATH.format(scene_id, "2d")):
         #     print("skipping {}...".format(scene_id))
         #     continue
+
+        print("processing {}...".format(scene_id))
+        start = time.time()
 
         point_cloud = scene_data[scene_id]
         frame_list = list(map(lambda x: x.split(".")[0], os.listdir(SCANNET_FRAME_ROOT.format(scene_id, "color"))))
@@ -146,8 +153,20 @@ if __name__ == "__main__":
             scene_poses[i] = load_pose(SCANNET_FRAME_PATH.format(scene_id, "pose", "{}.txt".format(frame_id)))
 
         projection_3d, projection_2d = compute_projection(point_cloud[:, :3], scene_depths, scene_poses)
+        
         np.save(PROJECTION_PATH.format(scene_id, "3d"), projection_3d.cpu().numpy())
         np.save(PROJECTION_PATH.format(scene_id, "2d"), projection_2d.cpu().numpy())
+
+        # verbose
+        num_left = len(scene_list) - idx - 1
+        eta = get_eta(start, time.time(), 0, num_left)
+        print("processed {}, {} scenes left, ETA: {}h {}m {}s".format(
+            scene_id,
+            num_left,
+            eta["h"],
+            eta["m"],
+            eta["s"]
+        ))
 
     print("done!")
         
