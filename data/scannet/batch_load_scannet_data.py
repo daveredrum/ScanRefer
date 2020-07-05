@@ -64,7 +64,7 @@ def batch_export():
         
     for scan_name in SCAN_NAMES:
         output_filename_prefix = os.path.join(OUTPUT_FOLDER, scan_name)
-        if os.path.exists(output_filename_prefix + +'_vert.npy'): continue
+        if os.path.exists(output_filename_prefix + '_vert.npy'): continue
         
         print('-'*20+'begin')
         print(datetime.datetime.now())
