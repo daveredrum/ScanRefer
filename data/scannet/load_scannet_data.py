@@ -67,7 +67,8 @@ def export(mesh_file, agg_file, seg_file, meta_file, label_map_file, output_file
     pts = np.ones((mesh_vertices.shape[0], 4))
     pts[:,0:3] = mesh_vertices[:,0:3]
     pts = np.dot(pts, axis_align_matrix.transpose()) # Nx4
-    mesh_vertices[:,0:3] = pts[:,0:3]
+    aligned_vertices = np.copy(mesh_vertices)
+    aligned_vertices[:,0:3] = pts[:,0:3]
 
     # Load semantic and instance labels
     object_id_to_segs, label_to_segs = read_aggregation(agg_file)
@@ -110,11 +111,12 @@ def export(mesh_file, agg_file, seg_file, meta_file, label_map_file, output_file
 
     if output_file is not None:
         np.save(output_file+'_vert.npy', mesh_vertices)
+        np.save(output_file+'_aligned_vert.npy', aligned_vertices)
         np.save(output_file+'_sem_label.npy', label_ids)
         np.save(output_file+'_ins_label.npy', instance_ids)
         np.save(output_file+'_bbox.npy', instance_bboxes)
 
-    return mesh_vertices, label_ids, instance_ids, instance_bboxes, object_id_to_label_id
+    return mesh_vertices, aligned_vertices, label_ids, instance_ids, instance_bboxes, object_id_to_label_id
 
 def main():
     parser = argparse.ArgumentParser()

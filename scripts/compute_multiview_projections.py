@@ -41,9 +41,8 @@ def get_scene_list():
 def load_scene(scene_list):
     scene_data = {}
     for scene_id in scene_list:
-        # scene_data[scene_id] = np.load(os.path.join(SCANNET_DATA, scene_id)+"_vert.npy")[:, :3]
-        mesh_file = os.path.join(CONF.PATH.SCANNET_SCANS, scene_id, scene_id + '_vh_clean_2.ply')
-        scene_data[scene_id] = scannet_utils.read_mesh_vertices(mesh_file)
+        # load the original vertices, not the axis-aligned ones
+        scene_data[scene_id] = np.load(os.path.join(SCANNET_DATA, scene_id)+"_vert.npy")[:, :3]
 
     return scene_data
 
