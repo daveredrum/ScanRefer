@@ -62,6 +62,10 @@ __Before moving on to the next step, please don't forget to set the project root
 cd data/scannet/
 python batch_load_scannet_data.py
 ```
+> After this step, you can check if the processed scene data is valid by running:
+> ```shell
+> python visualize.py --scene_id scene0000_00
+> ```
 <!-- 5. (Optional) Download the preprocessed [multiview features (~36GB)](http://kaldir.vc.in.tum.de/enet_feats.hdf5) and put it under `data/scannet/scannet_data/`. -->
 5. (Optional) Pre-process the multiview features from ENet. 
 
