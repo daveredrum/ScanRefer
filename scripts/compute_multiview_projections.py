@@ -10,6 +10,9 @@ from PIL import Image
 from tqdm import tqdm
 
 sys.path.append(os.path.join(os.getcwd())) # HACK add the root folder
+
+import data.scannet.scannet_utils as scannet_utils
+
 from lib.config import CONF
 from lib.projection import ProjectionHelper
 
@@ -37,7 +40,9 @@ def get_scene_list():
 def load_scene(scene_list):
     scene_data = {}
     for scene_id in scene_list:
-        scene_data[scene_id] = np.load(os.path.join(SCANNET_DATA, scene_id)+"_vert.npy")[:, :3]
+        # scene_data[scene_id] = np.load(os.path.join(SCANNET_DATA, scene_id)+"_vert.npy")[:, :3]
+        mesh_file = os.path.join(CONF.PATH.SCANNET_SCANS, scene_id, scene_id + '_vh_clean_2.ply')
+        scene_data[scene_id] = scannet_utils.read_mesh_vertices(mesh_file)
 
     return scene_data
 
