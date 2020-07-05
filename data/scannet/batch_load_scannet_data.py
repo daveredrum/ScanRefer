@@ -26,20 +26,21 @@ def export_one_scan(scan_name, output_filename_prefix):
     agg_file = os.path.join(SCANNET_DIR, scan_name, scan_name + '_vh_clean.aggregation.json')
     seg_file = os.path.join(SCANNET_DIR, scan_name, scan_name + '_vh_clean_2.0.010000.segs.json')
     meta_file = os.path.join(SCANNET_DIR, scan_name, scan_name + '.txt') # includes axisAlignment info for the train set scans.   
-    mesh_vertices, aligned_vertices, semantic_labels, instance_labels, instance_bboxes, instance2semantic = export(mesh_file, agg_file, seg_file, meta_file, LABEL_MAP_FILE, None)
+    mesh_vertices, aligned_vertices, semantic_labels, instance_labels, instance_bboxes = export(mesh_file, agg_file, seg_file, meta_file, LABEL_MAP_FILE, None)
 
     mask = np.logical_not(np.in1d(semantic_labels, DONOTCARE_CLASS_IDS))
     mesh_vertices = mesh_vertices[mask,:]
     semantic_labels = semantic_labels[mask]
     instance_labels = instance_labels[mask]
 
-    num_instances = len(np.unique(instance_labels))
-    print('Num of instances: ', num_instances)
+    if instance_bboxes.shape[0] > 1:
+        num_instances = len(np.unique(instance_labels))
+        print('Num of instances: ', num_instances)
 
-    # bbox_mask = np.in1d(instance_bboxes[:,-1], OBJ_CLASS_IDS)
-    bbox_mask = np.in1d(instance_bboxes[:,-2], OBJ_CLASS_IDS) # match the mesh2cap
-    instance_bboxes = instance_bboxes[bbox_mask,:]
-    print('Num of care instances: ', instance_bboxes.shape[0])
+        # bbox_mask = np.in1d(instance_bboxes[:,-1], OBJ_CLASS_IDS)
+        bbox_mask = np.in1d(instance_bboxes[:,-2], OBJ_CLASS_IDS) # match the mesh2cap
+        instance_bboxes = instance_bboxes[bbox_mask,:]
+        print('Num of care instances: ', instance_bboxes.shape[0])
 
     N = mesh_vertices.shape[0]
     if N > MAX_NUM_POINT:
