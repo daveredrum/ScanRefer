@@ -41,6 +41,8 @@ def export_one_scan(scan_name, output_filename_prefix):
         bbox_mask = np.in1d(instance_bboxes[:,-2], OBJ_CLASS_IDS) # match the mesh2cap
         instance_bboxes = instance_bboxes[bbox_mask,:]
         print('Num of care instances: ', instance_bboxes.shape[0])
+    else:
+        print("No semantic/instance annotation for test scenes")
 
     N = mesh_vertices.shape[0]
     if N > MAX_NUM_POINT:
