@@ -80,12 +80,7 @@ python batch_load_scannet_data.py
     python script/compute_multiview_features.py
     ```
 
-    e. Pre-compute the point-to-pixel mappings:
-    ```shell
-    python script/compute_multiview_projections.py
-    ```
-
-    f. Project ENet features from ScanNet frames to point clouds; you need ~36GB to store the generated HDF5 database:
+    e. Project ENet features from ScanNet frames to point clouds; you need ~36GB to store the generated HDF5 database:
     ```shell
     python script/project_multiview_features.py
     ```
