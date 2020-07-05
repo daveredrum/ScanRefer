@@ -14,7 +14,6 @@ import numpy as np
 import scannet_utils
 
 def read_aggregation(filename):
-    assert os.path.isfile(filename)
     object_id_to_segs = {}
     label_to_segs = {}
     with open(filename) as f:
@@ -33,7 +32,6 @@ def read_aggregation(filename):
 
 
 def read_segmentation(filename):
-    assert os.path.isfile(filename)
     seg_to_verts = {}
     with open(filename) as f:
         data = json.load(f)
@@ -76,8 +74,12 @@ def export(mesh_file, agg_file, seg_file, meta_file, label_map_file, output_file
 
     # Load semantic and instance labels
     try:
+        assert os.path.isfile(agg_file)
         object_id_to_segs, label_to_segs = read_aggregation(agg_file)
+
+        assert os.path.isfile(seg_file)
         seg_to_verts, num_verts = read_segmentation(seg_file)
+
         label_ids = np.zeros(shape=(num_verts), dtype=np.uint32) # 0: unannotated
         object_id_to_label_id = {}
         for label, segs in label_to_segs.items():
