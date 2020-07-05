@@ -114,6 +114,7 @@ def export(mesh_file, agg_file, seg_file, meta_file, label_map_file, output_file
             instance_bboxes[obj_id-1,:] = bbox 
     else:
         # use zero as placeholders for the test scene
+        num_verts = mesh_vertices.shape[0]
         label_ids = np.zeros(shape=(num_verts), dtype=np.uint32) # 0: unannotated
         instance_ids = np.zeros(shape=(num_verts), dtype=np.uint32) # 0: unannotated
         instance_bboxes = np.zeros((1, 8)) # also include object id
