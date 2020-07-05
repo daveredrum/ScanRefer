@@ -129,6 +129,8 @@ if __name__ == "__main__":
     # make dir
     os.makedirs(PROJECTION_ROOT, exist_ok=True)
     scene_list = get_scene_list()
+
+    print("loading scene files...")
     scene_data = load_scene(scene_list)
 
     print("computing multiview projections...")
