@@ -59,16 +59,20 @@ def export(mesh_file, agg_file, seg_file, meta_file, label_map_file, output_file
 
     # Load scene axis alignment matrix
     lines = open(meta_file).readlines()
+    axis_align_matrix = None
     for line in lines:
         if 'axisAlignment' in line:
             axis_align_matrix = [float(x) for x in line.rstrip().strip('axisAlignment = ').split(' ')]
-            break
-    axis_align_matrix = np.array(axis_align_matrix).reshape((4,4))
-    pts = np.ones((mesh_vertices.shape[0], 4))
-    pts[:,0:3] = mesh_vertices[:,0:3]
-    pts = np.dot(pts, axis_align_matrix.transpose()) # Nx4
-    aligned_vertices = np.copy(mesh_vertices)
-    aligned_vertices[:,0:3] = pts[:,0:3]
+
+    if axis_align_matrix != None:
+        axis_align_matrix = np.array(axis_align_matrix).reshape((4,4))
+        pts = np.ones((mesh_vertices.shape[0], 4))
+        pts[:,0:3] = mesh_vertices[:,0:3]
+        pts = np.dot(pts, axis_align_matrix.transpose()) # Nx4
+        aligned_vertices = np.copy(mesh_vertices)
+        aligned_vertices[:,0:3] = pts[:,0:3]
+    else:
+        aligned_vertices = mesh_vertices
 
     # Load semantic and instance labels
     object_id_to_segs, label_to_segs = read_aggregation(agg_file)
