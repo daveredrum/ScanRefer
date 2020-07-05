@@ -73,11 +73,8 @@ def export(mesh_file, agg_file, seg_file, meta_file, label_map_file, output_file
         aligned_vertices = mesh_vertices
 
     # Load semantic and instance labels
-    try:
-        assert os.path.isfile(agg_file)
+    if os.path.isfile(agg_file):
         object_id_to_segs, label_to_segs = read_aggregation(agg_file)
-
-        assert os.path.isfile(seg_file)
         seg_to_verts, num_verts = read_segmentation(seg_file)
 
         label_ids = np.zeros(shape=(num_verts), dtype=np.uint32) # 0: unannotated
@@ -115,7 +112,7 @@ def export(mesh_file, agg_file, seg_file, meta_file, label_map_file, output_file
             bbox = np.array([(xmin+xmax)/2, (ymin+ymax)/2, (zmin+zmax)/2, xmax-xmin, ymax-ymin, zmax-zmin, label_id, obj_id-1]) # also include object id
             # NOTE: this assumes obj_id is in 1,2,3,.,,,.NUM_INSTANCES
             instance_bboxes[obj_id-1,:] = bbox 
-    except AssertionError:
+    else:
         # use zero as placeholders for the test scene
         label_ids = np.zeros(shape=(num_verts), dtype=np.uint32) # 0: unannotated
         instance_ids = np.zeros(shape=(num_verts), dtype=np.uint32) # 0: unannotated
