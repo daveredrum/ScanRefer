@@ -107,6 +107,7 @@ def compute_projection(points, depth, camera_to_world):
         if indices:
             indices_3ds[i] = indices[0].long()
             indices_2ds[i] = indices[1].long()
+            print("found {} mapping in {} points from frame {}".format(indices_3ds[i][0], num_points, i))
         
     return indices_3ds, indices_2ds
 
@@ -115,7 +116,8 @@ if __name__ == "__main__":
     scene_data = get_scene_data(scene_list)
     with h5py.File(ENET_FEATURE_DATABASE, "w", libver="latest") as database:
         print("projecting multiview features to point cloud...")
-        for scene_id in tqdm(scene_list):
+        for scene_id in scene_list:
+            print("processing {}...".format(scene_id))
             scene = scene_data[scene_id]
             # load frames
             frame_list = list(map(lambda x: x.split(".")[0], os.listdir(SCANNET_FRAME_ROOT.format(scene_id, "color"))))
