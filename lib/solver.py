@@ -82,7 +82,7 @@ BEST_REPORT_TEMPLATE = """
 """
 
 class Solver():
-    def __init__(self, model, config, dataloader, optimizer, stamp, val_step=10, use_lang_classifier=True, use_max_iou=False):
+    def __init__(self, model, config, dataloader, optimizer, stamp, val_step=10, use_lang_classifier=True):
         self.epoch = 0                    # set in __call__
         self.verbose = 0                  # set in __call__
         
@@ -93,7 +93,6 @@ class Solver():
         self.stamp = stamp
         self.val_step = val_step
         self.use_lang_classifier = use_lang_classifier
-        self.use_max_iou = use_max_iou
 
         self.best = {
             "epoch": 0,
@@ -215,7 +214,7 @@ class Solver():
         self.optimizer.step()
 
     def _compute_loss(self, data_dict):
-        _, data_dict = get_loss(data_dict, self.config, True, self.use_lang_classifier, self.use_max_iou)
+        _, data_dict = get_loss(data_dict, self.config, True, self.use_lang_classifier)
 
         # dump
         self._running_log["ref_loss"] = data_dict["ref_loss"]

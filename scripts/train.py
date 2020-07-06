@@ -65,7 +65,7 @@ def get_solver(args, dataloader, stamp):
     model = get_model(args)
     optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.wd)
     lang_cls_flag = not args.no_lang_cls
-    solver = Solver(model, DC, dataloader, optimizer, stamp, args.val_step, lang_cls_flag, (not args.no_max_iou))
+    solver = Solver(model, DC, dataloader, optimizer, stamp, args.val_step, lang_cls_flag)
     num_params = get_num_params(model)
 
     return solver, num_params
@@ -105,6 +105,8 @@ def get_scanrefer(scanrefer_train, scanrefer_val, num_scenes):
     # all scanrefer scene
     all_scene_list = train_scene_list + val_scene_list
 
+    print("train on {} samples and val on {} samples".format(len(new_scanrefer_train), len(scanrefer_val)))
+
     return new_scanrefer_train, scanrefer_val, all_scene_list
 
 def train(args):
@@ -141,9 +143,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--tag", type=str, help="tag for the training, e.g. cuda_wl", default="")
     parser.add_argument("--gpu", type=str, help="gpu", default="0")
-    parser.add_argument("--batch_size", type=int, help="batch size", default=8)
-    parser.add_argument("--epoch", type=int, help="number of epochs", default=10)
-    parser.add_argument("--verbose", type=int, help="iterations of showing verbose", default=1)
+    parser.add_argument("--batch_size", type=int, help="batch size", default=14)
+    parser.add_argument("--epoch", type=int, help="number of epochs", default=50)
+    parser.add_argument("--verbose", type=int, help="iterations of showing verbose", default=10)
     parser.add_argument("--val_step", type=int, help="iterations of validating", default=5000)
     parser.add_argument("--lr", type=float, help="learning rate", default=1e-3)
     parser.add_argument("--wd", type=float, help="weight decay", default=1e-5)
@@ -154,7 +156,6 @@ if __name__ == "__main__":
     parser.add_argument('--no_height', action='store_true', help='Do NOT use height signal in input.')
     parser.add_argument('--no_augment', action='store_true', help='Do NOT use height signal in input.')
     parser.add_argument('--no_lang_cls', action='store_true', help='Do NOT use language classifier.')
-    parser.add_argument('--no_max_iou', action='store_true', help='Do NOT use only the bbox with the highest IoU as target or all positive proposals.')
     parser.add_argument('--use_color', action='store_true', help='Use RGB color in input.')
     parser.add_argument('--use_normal', action='store_true', help='Use RGB color in input.')
     parser.add_argument('--use_multiview', action='store_true', help='Use multiview images.')

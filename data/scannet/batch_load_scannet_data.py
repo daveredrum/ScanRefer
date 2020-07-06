@@ -26,10 +26,11 @@ def export_one_scan(scan_name, output_filename_prefix):
     agg_file = os.path.join(SCANNET_DIR, scan_name, scan_name + '_vh_clean.aggregation.json')
     seg_file = os.path.join(SCANNET_DIR, scan_name, scan_name + '_vh_clean_2.0.010000.segs.json')
     meta_file = os.path.join(SCANNET_DIR, scan_name, scan_name + '.txt') # includes axisAlignment info for the train set scans.   
-    mesh_vertices, aligned_vertices, semantic_labels, instance_labels, instance_bboxes = export(mesh_file, agg_file, seg_file, meta_file, LABEL_MAP_FILE, None)
+    mesh_vertices, aligned_vertices, semantic_labels, instance_labels, instance_bboxes, aligned_instance_bboxes = export(mesh_file, agg_file, seg_file, meta_file, LABEL_MAP_FILE, None)
 
     mask = np.logical_not(np.in1d(semantic_labels, DONOTCARE_CLASS_IDS))
     mesh_vertices = mesh_vertices[mask,:]
+    aligned_vertices = aligned_vertices[mask,:]
     semantic_labels = semantic_labels[mask]
     instance_labels = instance_labels[mask]
 
@@ -40,6 +41,7 @@ def export_one_scan(scan_name, output_filename_prefix):
         # bbox_mask = np.in1d(instance_bboxes[:,-1], OBJ_CLASS_IDS)
         bbox_mask = np.in1d(instance_bboxes[:,-2], OBJ_CLASS_IDS) # match the mesh2cap
         instance_bboxes = instance_bboxes[bbox_mask,:]
+        aligned_instance_bboxes = aligned_instance_bboxes[bbox_mask,:]
         print('Num of care instances: ', instance_bboxes.shape[0])
     else:
         print("No semantic/instance annotation for test scenes")
@@ -59,6 +61,7 @@ def export_one_scan(scan_name, output_filename_prefix):
     np.save(output_filename_prefix+'_sem_label.npy', semantic_labels)
     np.save(output_filename_prefix+'_ins_label.npy', instance_labels)
     np.save(output_filename_prefix+'_bbox.npy', instance_bboxes)
+    np.save(output_filename_prefix+'_aligned_bbox.npy', aligned_instance_bboxes)
 
 def batch_export():
     if not os.path.exists(OUTPUT_FOLDER):
@@ -67,7 +70,7 @@ def batch_export():
         
     for scan_name in SCAN_NAMES:
         output_filename_prefix = os.path.join(OUTPUT_FOLDER, scan_name)
-        if os.path.exists(output_filename_prefix + '_vert.npy'): continue
+        # if os.path.exists(output_filename_prefix + '_vert.npy'): continue
         
         print('-'*20+'begin')
         print(datetime.datetime.now())

@@ -72,19 +72,16 @@ class RefModule(nn.Module):
             hidden_size=256,
             batch_first=True
         )
-        self.lang_sqz = nn.Sequential(
-            nn.Linear(256, 128),
-            nn.ReLU()
-        )
+
         self.feat_fuse = nn.Sequential(
-            nn.Conv1d(in_channels=128 + 128, out_channels=128, kernel_size=1),
+            nn.Conv1d(in_channels=256 + 128, out_channels=128, kernel_size=1),
             nn.ReLU()
         )
 
         # language classifier
         if use_lang_classifier:
             self.lang_cls = nn.Sequential(
-                nn.Linear(128, 18),
+                nn.Linear(256, 18),
                 nn.Dropout()
             )
             
@@ -129,12 +126,13 @@ class RefModule(nn.Module):
     
         # encode description
         _, lang_feat = self.gru(lang_feat)
+        lang_feat = lang_feat.squeeze(0)
         data_dict["lang_emb"] = lang_feat
-        lang_feat = self.lang_sqz(lang_feat.squeeze(0)).unsqueeze(2).repeat(1, 1, self.num_proposal)
+        lang_feat = lang_feat.unsqueeze(2).repeat(1, 1, self.num_proposal)
 
         # classify
         if self.use_lang_classifier:
-            data_dict["lang_scores"] = self.lang_cls(lang_feat[:, :, 0])
+            data_dict["lang_scores"] = self.lang_cls(data_dict["lang_emb"])
         
         # fuse
         features = self.feat_fuse(torch.cat([features, lang_feat], dim=1))

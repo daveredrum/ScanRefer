@@ -79,8 +79,8 @@ class ScannetReferenceDataset(Dataset):
             pcl_color = mesh_vertices[:,3:6]
         else:
             point_cloud = mesh_vertices[:,0:6] 
-            point_cloud[:,3:] = (point_cloud[:,3:]-MEAN_COLOR_RGB)/256.0
-            pcl_color = point_cloud[:,3:]
+            point_cloud[:,3:6] = (point_cloud[:,3:6]-MEAN_COLOR_RGB)/256.0
+            pcl_color = point_cloud[:,3:6]
         
         if self.use_normal:
             normals = mesh_vertices[:,6:9]
@@ -173,8 +173,7 @@ class ScannetReferenceDataset(Dataset):
         class_ind = [DC.nyu40id2class[int(x)] for x in instance_bboxes[:num_bbox,-2]]
         # NOTE: set size class as semantic class. Consider use size2class.
         size_classes[0:num_bbox] = class_ind
-        size_residuals[0:num_bbox, :] = \
-            target_bboxes[0:num_bbox, 3:6] - DC.mean_size_arr[class_ind,:]
+        size_residuals[0:num_bbox, :] = target_bboxes[0:num_bbox, 3:6] - DC.mean_size_arr[class_ind,:]
 
         # construct the reference target label for each bbox
         ref_box_label = np.zeros(MAX_NUM_OBJ)
@@ -215,6 +214,7 @@ class ScannetReferenceDataset(Dataset):
         data_dict["object_id"] = np.array(int(object_id)).astype(np.int64)
         data_dict["ann_id"] = np.array(int(ann_id)).astype(np.int64)
         data_dict["object_cat"] = np.array(self.raw2label[object_name]).astype(np.int64)
+        data_dict["unique_multiple"] = np.array(self.unique_multiple_lookup[scene_id][str(object_id)][ann_id]).astype(np.int64)
         data_dict["pcl_color"] = pcl_color
         data_dict["load_time"] = time.time() - start
 
@@ -239,6 +239,53 @@ class ScannetReferenceDataset(Dataset):
                 raw2label[raw_name] = scannet2label[nyu40_name]
 
         return raw2label
+
+    def _get_unique_multiple_lookup(self):
+        all_sem_labels = {}
+        cache = {}
+        for data in self.scanrefer:
+            scene_id = data["scene_id"]
+            object_id = data["object_id"]
+            object_name = " ".join(data["object_name"].split("_"))
+            ann_id = data["ann_id"]
+
+            if scene_id not in all_sem_labels:
+                all_sem_labels[scene_id] = []
+
+            if scene_id not in cache:
+                cache[scene_id] = {}
+
+            if object_id not in cache[scene_id]:
+                cache[scene_id][object_id] = {}
+                all_sem_labels[scene_id].append(self.raw2label[object_name])
+
+        # convert to numpy array
+        all_sem_labels = {scene_id: np.array(all_sem_labels[scene_id]) for scene_id in all_sem_labels.keys()}
+
+        unique_multiple_lookup = {}
+        for data in self.scanrefer:
+            scene_id = data["scene_id"]
+            object_id = data["object_id"]
+            object_name = " ".join(data["object_name"].split("_"))
+            ann_id = data["ann_id"]
+
+            sem_label = self.raw2label[object_name]
+
+            unique_multiple = 0 if (all_sem_labels[scene_id] == sem_label).sum() == 1 else 1
+
+            # store
+            if scene_id not in unique_multiple_lookup:
+                unique_multiple_lookup[scene_id] = {}
+
+            if object_id not in unique_multiple_lookup[scene_id]:
+                unique_multiple_lookup[scene_id][object_id] = {}
+
+            if ann_id not in unique_multiple_lookup[scene_id][object_id]:
+                unique_multiple_lookup[scene_id][object_id][ann_id] = None
+
+            unique_multiple_lookup[scene_id][object_id][ann_id] = unique_multiple
+
+        return unique_multiple_lookup
 
     def _tranform_des(self):
         with open(GLOVE_PICKLE, "rb") as f:
@@ -307,6 +354,7 @@ class ScannetReferenceDataset(Dataset):
         # store
         self.raw2nyuid = raw2nyuid
         self.raw2label = self._get_raw2label()
+        self.unique_multiple_lookup = self._get_unique_multiple_lookup()
 
     def _translate(self, point_set, bbox):
         # unpack
