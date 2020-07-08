@@ -59,7 +59,8 @@ def get_model(args, config):
         use_bidir=args.use_bidir
     ).cuda()
 
-    path = os.path.join(CONF.PATH.OUTPUT, args.folder, "model.pth")
+    model_name = "model_last.pth" if args.detection else "model.pth"
+    path = os.path.join(CONF.PATH.OUTPUT, args.folder, model_name)
     model.load_state_dict(torch.load(path), strict=False)
     model.eval()
 
