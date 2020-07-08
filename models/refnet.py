@@ -7,11 +7,15 @@ import os
 sys.path.append(os.path.join(os.getcwd(), "lib")) # HACK add the lib folder
 from models.backbone_module import Pointnet2Backbone
 from models.voting_module import VotingModule
-from models.ref_module import RefModule
-
+from models.proposal_module import ProposalModule
+from models.lang_module import LangModule
+from models.match_module import MatchModule
 
 class RefNet(nn.Module):
-    def __init__(self, num_class, num_heading_bin, num_size_cluster, mean_size_arr, input_feature_dim=0, num_proposal=128, vote_factor=1, sampling="vote_fps", use_lang_classifier=True):
+    def __init__(self, num_class, num_heading_bin, num_size_cluster, mean_size_arr, 
+    input_feature_dim=0, num_proposal=128, vote_factor=1, sampling="vote_fps",
+    use_lang_classifier=True, use_bidir=False, no_reference=False,
+    emb_size=300, hidden_size=256):
         super().__init__()
 
         self.num_class = num_class
@@ -22,17 +26,31 @@ class RefNet(nn.Module):
         self.input_feature_dim = input_feature_dim
         self.num_proposal = num_proposal
         self.vote_factor = vote_factor
-        self.sampling=sampling
-        self.use_lang_classifier=use_lang_classifier
+        self.sampling = sampling
+        self.use_lang_classifier = use_lang_classifier
+        self.use_bidir = use_bidir      
+        self.no_reference = no_reference
 
+
+        # --------- PROPOSAL GENERATION ---------
         # Backbone point feature learning
         self.backbone_net = Pointnet2Backbone(input_feature_dim=self.input_feature_dim)
 
         # Hough voting
         self.vgen = VotingModule(self.vote_factor, 256)
 
-        # Vote aggregation, detection and language reference
-        self.rfnet = RefModule(num_class, num_heading_bin, num_size_cluster, mean_size_arr, num_proposal, sampling, use_lang_classifier)
+        # Vote aggregation and object proposal
+        self.proposal = ProposalModule(num_class, num_heading_bin, num_size_cluster, mean_size_arr, num_proposal, sampling)
+
+        if not no_reference:
+            # --------- LANGUAGE ENCODING ---------
+            # Encode the input descriptions into vectors
+            # (including attention and language classification)
+            self.lang = LangModule(num_class, use_lang_classifier, use_bidir, emb_size, hidden_size)
+
+            # --------- PROPOSAL MATCHING ---------
+            # Match the generated proposals and select the most confident ones
+            self.match = MatchModule(num_proposals=num_proposal, lang_size=(1 + int(self.use_bidir)) * hidden_size)
 
     def forward(self, data_dict):
         """ Forward pass of the network
@@ -53,8 +71,13 @@ class RefNet(nn.Module):
             end_points: dict
         """
 
-        batch_size = data_dict["point_clouds"].shape[0]
+        #######################################
+        #                                     #
+        #           DETECTION BRANCH          #
+        #                                     #
+        #######################################
 
+        # --------- HOUGH VOTING ---------
         data_dict = self.backbone_net(data_dict)
                 
         # --------- HOUGH VOTING ---------
@@ -70,6 +93,26 @@ class RefNet(nn.Module):
         data_dict["vote_xyz"] = xyz
         data_dict["vote_features"] = features
 
-        data_dict = self.rfnet(xyz, features, data_dict)
+        # --------- PROPOSAL GENERATION ---------
+        data_dict = self.proposal(xyz, features, data_dict)
+
+        if not self.no_reference:
+            #######################################
+            #                                     #
+            #           LANGUAGE BRANCH           #
+            #                                     #
+            #######################################
+
+            # --------- LANGUAGE ENCODING ---------
+            data_dict = self.lang(data_dict)
+
+            #######################################
+            #                                     #
+            #          PROPOSAL MATCHING          #
+            #                                     #
+            #######################################
+
+            # --------- PROPOSAL MATCHING ---------
+            data_dict = self.match(data_dict)
 
         return data_dict

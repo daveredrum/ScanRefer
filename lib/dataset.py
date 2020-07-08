@@ -108,6 +108,11 @@ class ScannetReferenceDataset(Dataset):
         size_classes = np.zeros((MAX_NUM_OBJ,))
         size_residuals = np.zeros((MAX_NUM_OBJ, 3))
         ref_box_label = np.zeros(MAX_NUM_OBJ) # bbox label for reference target
+        ref_center_label = np.zeros(3) # bbox center for reference target
+        ref_heading_class_label = 0
+        ref_heading_residual_label = 0
+        ref_size_class_label = 0
+        ref_size_residual_label = np.zeros(3) # bbox size residual for reference target
         
         point_cloud, choices = random_sampling(point_cloud, self.num_points, return_choices=True)        
         instance_labels = instance_labels[choices]

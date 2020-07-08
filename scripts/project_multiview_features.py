@@ -120,7 +120,7 @@ if __name__ == "__main__":
             print("processing {}...".format(scene_id))
             scene = scene_data[scene_id]
             # load frames
-            frame_list = list(map(lambda x: x.split(".")[0], os.listdir(SCANNET_FRAME_ROOT.format(scene_id, "color"))))
+            frame_list = list(map(lambda x: x.split(".")[0], sorted(os.listdir(SCANNET_FRAME_ROOT.format(scene_id, "color")))))
             scene_images = np.zeros((len(frame_list), 3, 256, 328))
             scene_depths = np.zeros((len(frame_list), 32, 41))
             scene_poses = np.zeros((len(frame_list), 4, 4))
@@ -131,8 +131,6 @@ if __name__ == "__main__":
 
             # compute projections for each chunk
             projection_3d, projection_2d = compute_projection(scene, scene_depths, scene_poses)
-            _, inds = torch.sort(projection_3d[:, 0], descending=True)
-            projection_3d, projection_2d = projection_3d[inds], projection_2d[inds]
             
             # compute valid projections
             projections = []
@@ -141,7 +139,7 @@ if __name__ == "__main__":
                 if num_valid == 0:
                     continue
 
-                projections.append((frame_list[inds[i].long().item()], projection_3d[i], projection_2d[i]))
+                projections.append((frame_list[i], projection_3d[i], projection_2d[i]))
 
             # project
             point_features = to_tensor(scene).new(scene.shape[0], 128).fill_(0)

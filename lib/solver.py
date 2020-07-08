@@ -15,6 +15,7 @@ from tensorboardX import SummaryWriter
 sys.path.append(os.path.join(os.getcwd(), "lib")) # HACK add the lib folder
 from lib.config import CONF
 from lib.loss_helper import get_loss
+from lib.eval_helper import get_eval
 from utils.eta import decode_eta
 
 
@@ -82,7 +83,7 @@ BEST_REPORT_TEMPLATE = """
 """
 
 class Solver():
-    def __init__(self, model, config, dataloader, optimizer, stamp, val_step=10, use_lang_classifier=True):
+    def __init__(self, model, config, dataloader, optimizer, stamp, val_step=10, detection=True, reference=True, use_lang_classifier=True):
         self.epoch = 0                    # set in __call__
         self.verbose = 0                  # set in __call__
         
@@ -92,6 +93,9 @@ class Solver():
         self.optimizer = optimizer
         self.stamp = stamp
         self.val_step = val_step
+
+        self.detection = detection
+        self.reference = reference
         self.use_lang_classifier = use_lang_classifier
 
         self.best = {
@@ -214,7 +218,13 @@ class Solver():
         self.optimizer.step()
 
     def _compute_loss(self, data_dict):
-        _, data_dict = get_loss(data_dict, self.config, True, self.use_lang_classifier)
+        _, data_dict = get_loss(
+            data_dict=data_dict, 
+            config=self.config, 
+            detection=self.detection,
+            reference=self.reference, 
+            use_lang_classifier=self.use_lang_classifier
+        )
 
         # dump
         self._running_log["ref_loss"] = data_dict["ref_loss"]
@@ -223,7 +233,24 @@ class Solver():
         self._running_log["vote_loss"] = data_dict["vote_loss"]
         self._running_log["box_loss"] = data_dict["box_loss"]
         self._running_log["loss"] = data_dict["loss"]
-      
+
+    def _eval(self, data_dict):
+        data_dict = get_eval(
+            data_dict=data_dict,
+            config=self.config,
+            reference=self.reference,
+            use_lang_classifier=self.use_lang_classifier
+        )
+
+        # dump
+        self._running_log["lang_acc"] = data_dict["lang_acc"].item()
+        self._running_log["ref_acc"] = np.mean(data_dict["ref_acc"])
+        self._running_log["obj_acc"] = data_dict["obj_acc"].item()
+        self._running_log["pos_ratio"] = data_dict["pos_ratio"].item()
+        self._running_log["neg_ratio"] = data_dict["neg_ratio"].item()
+        self._running_log["iou_rate_0.25"] = np.mean(data_dict["ref_iou_rate_0.25"])
+        self._running_log["iou_rate_0.5"] = np.mean(data_dict["ref_iou_rate_0.5"])
+
     def _feed(self, dataloader, phase, epoch_id):
         # switch mode
         self._set_phase(phase)
@@ -344,16 +371,6 @@ class Solver():
                 model_root = os.path.join(CONF.PATH.OUTPUT, self.stamp)
                 torch.save(self.model.state_dict(), os.path.join(model_root, "model.pth"))
 
-    def _eval(self, data_dict):
-        # dump
-        self._running_log["lang_acc"] = data_dict["lang_acc"].item()
-        self._running_log["ref_acc"] = np.mean(data_dict["ref_acc"])
-        self._running_log["obj_acc"] = data_dict["obj_acc"].item()
-        self._running_log["pos_ratio"] = data_dict["pos_ratio"].item()
-        self._running_log["neg_ratio"] = data_dict["neg_ratio"].item()
-        self._running_log["iou_rate_0.25"] = np.mean(data_dict["ref_iou_rate_0.25"])
-        self._running_log["iou_rate_0.5"] = np.mean(data_dict["ref_iou_rate_0.5"])
-
     def _dump_log(self, phase):
         log = {
             "loss": ["loss", "ref_loss", "lang_loss", "objectness_loss", "vote_loss", "box_loss"],
@@ -370,6 +387,16 @@ class Solver():
     def _finish(self, epoch_id):
         # print best
         self._best_report()
+
+        # save check point
+        self._log("saving checkpoint...\n")
+        save_dict = {
+            "epoch": epoch_id,
+            "model_state_dict": self.model.state_dict(),
+            "optimizer_state_dict": self.optimizer.state_dict()
+        }
+        checkpoint_root = os.path.join(CONF.PATH.OUTPUT, self.stamp)
+        torch.save(save_dict, os.path.join(checkpoint_root, "checkpoint.tar"))
 
         # save model
         self._log("saving last models...\n")

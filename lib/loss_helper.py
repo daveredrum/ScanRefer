@@ -185,13 +185,11 @@ def compute_box_and_sem_cls_loss(data_dict, config):
 
     return center_loss, heading_class_loss, heading_residual_normalized_loss, size_class_loss, size_residual_normalized_loss, sem_cls_loss
 
-def compute_reference_loss(data_dict, config, use_lang_classifier=False):
+def compute_reference_loss(data_dict, config):
     """ Compute cluster reference loss
 
     Args:
         data_dict: dict (read-only)
-        use_lang_classifier: Boolean, whether the language classifier is applied here or not
-        use_max_iou: Boolean, whether marking the bbox with highest iou score as the only positive or not
 
     Returns:
         ref_loss, lang_loss, cluster_preds, cluster_labels
@@ -202,7 +200,6 @@ def compute_reference_loss(data_dict, config, use_lang_classifier=False):
     object_assignment = data_dict["object_assignment"] # (B, num_proposal)
     objectness_labels = data_dict['objectness_label'].float()
 
-    # select assigned reference boxes
     # predicted bbox
     pred_ref = data_dict['cluster_ref'].detach().cpu().numpy() # (B,)
     pred_center = data_dict['center'].detach().cpu().numpy() # (B,K,3)
@@ -228,39 +225,37 @@ def compute_reference_loss(data_dict, config, use_lang_classifier=False):
 
     # compute the iou score for all predictd positive ref
     batch_size, num_proposals = cluster_preds.shape
-    cluster_labels = np.zeros((batch_size, num_proposals))
+    labels = np.zeros((batch_size, num_proposals))
     for i in range(pred_ref.shape[0]):
         # convert the bbox parameters to bbox corners
         pred_obb_batch = config.param2obb_batch(pred_center[i, :, 0:3], pred_heading_class[i], pred_heading_residual[i],
                     pred_size_class[i], pred_size_residual[i])
         pred_bbox_batch = get_3d_box_batch(pred_obb_batch[:, 3:6], pred_obb_batch[:, 6], pred_obb_batch[:, 0:3])
         ious = box3d_iou_batch(pred_bbox_batch, np.tile(gt_bbox_batch[i], (num_proposals, 1, 1)))
-        cluster_labels[i, ious.argmax()] = 1 # treat the bbox with highest iou score as the gt
+        labels[i, ious.argmax()] = 1 # treat the bbox with highest iou score as the gt
 
-    cluster_labels = torch.FloatTensor(cluster_labels).cuda()
+    cluster_labels = torch.FloatTensor(labels).cuda()
 
     # reference loss
     REFERENCE_CLS_WEIGHTS = [1/num_proposals, 1] # put larger weights on positive reference
     criterion = SoftmaxRankingLoss(REFERENCE_CLS_WEIGHTS)
-    ref_loss = criterion(cluster_preds, cluster_labels.float().clone())
+    loss = criterion(cluster_preds, cluster_labels.float().clone())
 
-    # language loss
-    if use_lang_classifier:
-        criterion = torch.nn.CrossEntropyLoss()
-        lang_loss = criterion(data_dict["lang_scores"], data_dict["object_cat"])
-    else:
-        lang_loss = torch.zeros(1)[0].cuda()
+    return loss, cluster_preds, cluster_labels
 
-    return ref_loss, lang_loss, cluster_preds, cluster_labels
+def compute_lang_classification_loss(data_dict):
+    criterion = torch.nn.CrossEntropyLoss()
+    loss = criterion(data_dict["lang_scores"], data_dict["object_cat"])
 
-def get_loss(data_dict, config, reference=False, use_lang_classifier=False, post_processing=None):
+    return loss
+
+def get_loss(data_dict, config, detection=True, reference=True, use_lang_classifier=False):
     """ Loss functions
 
     Args:
         data_dict: dict
         config: dataset config instance
         reference: flag (False/True)
-        post_processing: config dict
     Returns:
         loss: pytorch scalar tensor
         data_dict: dict
@@ -268,130 +263,69 @@ def get_loss(data_dict, config, reference=False, use_lang_classifier=False, post
 
     # Vote loss
     vote_loss = compute_vote_loss(data_dict)
-    data_dict['vote_loss'] = vote_loss
 
     # Obj loss
     objectness_loss, objectness_label, objectness_mask, object_assignment = compute_objectness_loss(data_dict)
-    data_dict['objectness_loss'] = objectness_loss
+    num_proposal = objectness_label.shape[1]
+    total_num_proposal = objectness_label.shape[0]*objectness_label.shape[1]
     data_dict['objectness_label'] = objectness_label
     data_dict['objectness_mask'] = objectness_mask
     data_dict['object_assignment'] = object_assignment
-    total_num_proposal = objectness_label.shape[0]*objectness_label.shape[1]
     data_dict['pos_ratio'] = torch.sum(objectness_label.float().cuda())/float(total_num_proposal)
     data_dict['neg_ratio'] = torch.sum(objectness_mask.float())/float(total_num_proposal) - data_dict['pos_ratio']
 
     # Box loss and sem cls loss
     center_loss, heading_cls_loss, heading_reg_loss, size_cls_loss, size_reg_loss, sem_cls_loss = compute_box_and_sem_cls_loss(data_dict, config)
-    data_dict['center_loss'] = center_loss
-    data_dict['heading_cls_loss'] = heading_cls_loss
-    data_dict['heading_reg_loss'] = heading_reg_loss
-    data_dict['size_cls_loss'] = size_cls_loss
-    data_dict['size_reg_loss'] = size_reg_loss
-    data_dict['sem_cls_loss'] = sem_cls_loss
     box_loss = center_loss + 0.1*heading_cls_loss + heading_reg_loss + 0.1*size_cls_loss + size_reg_loss
-    data_dict['box_loss'] = box_loss
+    
+
+    if detection:
+        data_dict['vote_loss'] = vote_loss
+        data_dict['objectness_loss'] = objectness_loss
+        data_dict['center_loss'] = center_loss
+        data_dict['heading_cls_loss'] = heading_cls_loss
+        data_dict['heading_reg_loss'] = heading_reg_loss
+        data_dict['size_cls_loss'] = size_cls_loss
+        data_dict['size_reg_loss'] = size_reg_loss
+        data_dict['sem_cls_loss'] = sem_cls_loss
+        data_dict['box_loss'] = box_loss
+    else:
+        data_dict['vote_loss'] = torch.zeros(1)[0].cuda()
+        data_dict['objectness_loss'] = torch.zeros(1)[0].cuda()
+        data_dict['center_loss'] = torch.zeros(1)[0].cuda()
+        data_dict['heading_cls_loss'] = torch.zeros(1)[0].cuda()
+        data_dict['heading_reg_loss'] = torch.zeros(1)[0].cuda()
+        data_dict['size_cls_loss'] = torch.zeros(1)[0].cuda()
+        data_dict['size_reg_loss'] = torch.zeros(1)[0].cuda()
+        data_dict['sem_cls_loss'] = torch.zeros(1)[0].cuda()
+        data_dict['box_loss'] = torch.zeros(1)[0].cuda()
 
     if reference:
         # Reference loss
-        ref_loss, lang_loss, cluster_preds_scores, cluster_labels = compute_reference_loss(data_dict, config, use_lang_classifier)
+        ref_loss, _, cluster_labels = compute_reference_loss(data_dict, config)
+        data_dict["cluster_labels"] = cluster_labels
         data_dict["ref_loss"] = ref_loss
-        data_dict["lang_loss"] = lang_loss
-
-        objectness_preds_batch = torch.argmax(data_dict['objectness_scores'], 2).long()
-        objectness_labels_batch = objectness_label.long()
-
-        if post_processing:
-            _ = parse_predictions(data_dict, post_processing)
-            nms_masks = torch.LongTensor(data_dict['pred_mask']).cuda()
-
-            # construct valid mask
-            pred_masks = (nms_masks * objectness_preds_batch == 1).float()
-            label_masks = (objectness_labels_batch == 1).float()
-        else:
-            # construct valid mask
-            pred_masks = (objectness_preds_batch == 1).float()
-            label_masks = (objectness_labels_batch == 1).float()
-
-        data_dict["pred_mask"] = pred_masks
-        data_dict["label_mask"] = label_masks
-
-        cluster_preds = torch.argmax(cluster_preds_scores * pred_masks, 1).long().unsqueeze(1).repeat(1, pred_masks.shape[1])
-        preds = torch.zeros(pred_masks.shape).cuda()
-        preds = preds.scatter_(1, cluster_preds, 1)
-        cluster_preds = preds
-        cluster_labels = cluster_labels.float()
-        cluster_labels *= label_masks
-        
-        # compute classification scores
-        corrects = torch.sum((cluster_preds == 1) * (cluster_labels == 1), dim=1).float()
-        labels = torch.ones(corrects.shape[0]).cuda()
-
-        ref_acc = corrects / (labels + 1e-8)
-        
-        # store
-        data_dict["ref_acc"] = ref_acc.cpu().numpy().tolist()
-
-        # compute localization metrics
-        pred_ref = torch.argmax(data_dict['cluster_ref'] * data_dict['pred_mask'], 1).detach().cpu().numpy() # (B,)
-        pred_center = data_dict['center'].detach().cpu().numpy() # (B,K,3)
-        pred_heading_class = torch.argmax(data_dict['heading_scores'], -1) # B,num_proposal
-        pred_heading_residual = torch.gather(data_dict['heading_residuals'], 2, pred_heading_class.unsqueeze(-1)) # B,num_proposal,1
-        pred_heading_class = pred_heading_class.detach().cpu().numpy() # B,num_proposal
-        pred_heading_residual = pred_heading_residual.squeeze(2).detach().cpu().numpy() # B,num_proposal
-        pred_size_class = torch.argmax(data_dict['size_scores'], -1) # B,num_proposal
-        pred_size_residual = torch.gather(data_dict['size_residuals'], 2, pred_size_class.unsqueeze(-1).unsqueeze(-1).repeat(1,1,1,3)) # B,num_proposal,1,3
-        pred_size_class = pred_size_class.detach().cpu().numpy()
-        pred_size_residual = pred_size_residual.squeeze(2).detach().cpu().numpy() # B,num_proposal,3
-
-        gt_ref = torch.argmax(data_dict["ref_box_label"], 1).detach().cpu().numpy()
-        gt_center = data_dict['center_label'].cpu().numpy() # (B,MAX_NUM_OBJ,3)
-        gt_heading_class = data_dict['heading_class_label'].cpu().numpy() # B,K2
-        gt_heading_residual = data_dict['heading_residual_label'].cpu().numpy() # B,K2
-        gt_size_class = data_dict['size_class_label'].cpu().numpy() # B,K2
-        gt_size_residual = data_dict['size_residual_label'].cpu().numpy() # B,K2,3
-
-        ious = []
-        multiple = []
-        for i in range(pred_ref.shape[0]):
-            # compute the iou
-            pred_ref_idx, gt_ref_idx = pred_ref[i], gt_ref[i]
-            pred_obb = config.param2obb(pred_center[i, pred_ref_idx, 0:3], pred_heading_class[i, pred_ref_idx], pred_heading_residual[i, pred_ref_idx],
-                            pred_size_class[i, pred_ref_idx], pred_size_residual[i, pred_ref_idx])
-            gt_obb = config.param2obb(gt_center[i, gt_ref_idx, 0:3], gt_heading_class[i, gt_ref_idx], gt_heading_residual[i, gt_ref_idx],
-                            gt_size_class[i, gt_ref_idx], gt_size_residual[i, gt_ref_idx])
-            pred_bbox = get_3d_box(pred_obb[3:6], pred_obb[6], pred_obb[0:3])
-            gt_bbox = get_3d_box(gt_obb[3:6], gt_obb[6], gt_obb[0:3])
-            iou, _ = box3d_iou(pred_bbox, gt_bbox)
-            ious.append(iou)
-
-            # construct the multiple mask
-            multiple.append(data_dict["unique_multiple"][i].item())
-
-        # store
-        data_dict["ref_iou"] = ious
-        data_dict["ref_iou_rate_0.25"] = np.array(ious)[np.array(ious) >= 0.25].shape[0] / np.array(ious).shape[0]
-        data_dict["ref_iou_rate_0.5"] = np.array(ious)[np.array(ious) >= 0.5].shape[0] / np.array(ious).shape[0]
-        data_dict["ref_multiple_mask"] = multiple
     else:
-        ref_loss = torch.zeros(1)[0].cuda()
-        lang_loss = torch.zeros(1)[0].cuda()
+        # # Reference loss
+        # ref_loss, _, cluster_labels = compute_reference_loss(data_dict, config)
+        # data_dict["cluster_labels"] = cluster_labels
+        data_dict["cluster_labels"] = objectness_label.new_zeros(objectness_label.shape).cuda()
+        data_dict["cluster_ref"] = objectness_label.new_zeros(objectness_label.shape).float().cuda()
+
+        # store
+        data_dict["ref_loss"] = torch.zeros(1)[0].cuda()
+
+    if reference and use_lang_classifier:
+        data_dict["lang_loss"] = compute_lang_classification_loss(data_dict)
+    else:
+        data_dict["lang_loss"] = torch.zeros(1)[0].cuda()
 
     # Final loss function
-    loss = vote_loss + 0.5*objectness_loss + box_loss + 0.1*sem_cls_loss + 0.1*ref_loss + lang_loss
+    loss = data_dict['vote_loss'] + 0.5*data_dict['objectness_loss'] + data_dict['box_loss'] + 0.1*data_dict['sem_cls_loss'] \
+        + 0.1*data_dict["ref_loss"] + data_dict["lang_loss"]
+    
     loss *= 10 # amplify
 
     data_dict['loss'] = loss
-
-    # --------------------------------------------
-    # Some other statistics
-    obj_pred_val = torch.argmax(data_dict['objectness_scores'], 2) # B,K
-    obj_acc = torch.sum((obj_pred_val==objectness_label.long()).float()*objectness_mask)/(torch.sum(objectness_mask)+1e-6)
-    data_dict['obj_acc'] = obj_acc
-
-    # lang
-    if use_lang_classifier:
-        data_dict["lang_acc"] = (torch.argmax(data_dict['lang_scores'], 1) == data_dict["object_cat"]).float().mean()
-    else:
-        data_dict["lang_acc"] = torch.zeros(1)[0].cuda()
 
     return loss, data_dict
