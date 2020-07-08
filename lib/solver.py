@@ -10,6 +10,7 @@ import torch
 import numpy as np
 from tqdm import tqdm
 from tensorboardX import SummaryWriter
+from torch.optim.lr_scheduler import StepLR, MultiStepLR
 
 
 sys.path.append(os.path.join(os.getcwd(), "lib")) # HACK add the lib folder
@@ -17,6 +18,7 @@ from lib.config import CONF
 from lib.loss_helper import get_loss
 from lib.eval_helper import get_eval
 from utils.eta import decode_eta
+from lib.pointnet2.pytorch_utils import BNMomentumScheduler
 
 
 ITER_REPORT_TEMPLATE = """
@@ -83,7 +85,10 @@ BEST_REPORT_TEMPLATE = """
 """
 
 class Solver():
-    def __init__(self, model, config, dataloader, optimizer, stamp, val_step=10, detection=True, reference=True, use_lang_classifier=True):
+    def __init__(self, model, config, dataloader, optimizer, stamp, val_step=10, 
+    detection=True, reference=True, use_lang_classifier=True,
+    lr_decay_step=None, lr_decay_rate=None, bn_decay_step=None, bn_decay_rate=None):
+
         self.epoch = 0                    # set in __call__
         self.verbose = 0                  # set in __call__
         
@@ -97,6 +102,11 @@ class Solver():
         self.detection = detection
         self.reference = reference
         self.use_lang_classifier = use_lang_classifier
+
+        self.lr_decay_step = lr_decay_step
+        self.lr_decay_rate = lr_decay_rate
+        self.bn_decay_step = bn_decay_step
+        self.bn_decay_rate = bn_decay_rate
 
         self.best = {
             "epoch": 0,
@@ -166,6 +176,26 @@ class Solver():
         self.__epoch_report_template = EPOCH_REPORT_TEMPLATE
         self.__best_report_template = BEST_REPORT_TEMPLATE
 
+        # lr scheduler
+        if lr_decay_step and lr_decay_rate:
+            if isinstance(lr_decay_step, list):
+                self.lr_scheduler = MultiStepLR(optimizer, lr_decay_step, lr_decay_rate)
+            else:
+                self.lr_scheduler = StepLR(optimizer, lr_decay_step, lr_decay_rate)
+        else:
+            self.lr_scheduler = None
+
+        # bn scheduler
+        if bn_decay_step and bn_decay_rate:
+            it = -1
+            start_epoch = 0
+            BN_MOMENTUM_INIT = 0.5
+            BN_MOMENTUM_MAX = 0.001
+            bn_lbmd = lambda it: max(BN_MOMENTUM_INIT * bn_decay_rate**(int(it / bn_decay_step)), BN_MOMENTUM_MAX)
+            self.bn_scheduler = BNMomentumScheduler(model, bn_lambda=bn_lbmd, last_epoch=start_epoch-1)
+        else:
+            self.bn_scheduler = None
+
     def __call__(self, epoch, verbose):
         # setting
         self.epoch = epoch
@@ -184,6 +214,16 @@ class Solver():
                 self._log("saving last models...\n")
                 model_root = os.path.join(CONF.PATH.OUTPUT, self.stamp)
                 torch.save(self.model.state_dict(), os.path.join(model_root, "model_last.pth"))
+
+                # update lr scheduler
+                if self.lr_scheduler:
+                    print("update learning rate --> {}\n".format(self.lr_scheduler.get_lr()))
+                    self.lr_scheduler.step()
+
+                # update bn scheduler
+                if self.bn_scheduler:
+                    print("update batch normalization momentum --> {}\n".format(self.bn_scheduler.lmbd(self.bn_scheduler.last_epoch)))
+                    self.bn_scheduler.step()
                 
             except KeyboardInterrupt:
                 # finish training

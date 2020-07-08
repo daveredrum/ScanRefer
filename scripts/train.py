@@ -121,6 +121,12 @@ def get_solver(args, dataloader):
         root = os.path.join(CONF.PATH.OUTPUT, stamp)
         os.makedirs(root, exist_ok=True)
 
+    # scheduler parameters for training solely the detection pipeline
+    LR_DECAY_STEP = [80, 120, 160] if args.no_reference else None
+    LR_DECAY_RATE = 0.1 if args.no_reference else None
+    BN_DECAY_STEP = 20 if args.no_reference else None
+    BN_DECAY_RATE = 0.5 if args.no_reference else None
+
     solver = Solver(
         model=model, 
         config=DC, 
@@ -130,7 +136,11 @@ def get_solver(args, dataloader):
         val_step=args.val_step,
         detection=not args.no_detection,
         reference=not args.no_reference, 
-        use_lang_classifier=not args.no_lang_cls
+        use_lang_classifier=not args.no_lang_cls,
+        lr_decay_step=LR_DECAY_STEP,
+        lr_decay_rate=LR_DECAY_RATE,
+        bn_decay_step=BN_DECAY_STEP,
+        bn_decay_rate=BN_DECAY_RATE
     )
     num_params = get_num_params(model)
 
