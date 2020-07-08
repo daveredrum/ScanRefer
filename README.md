@@ -84,6 +84,10 @@ python batch_load_scannet_data.py
     ```shell
     python script/project_multiview_features.py
     ```
+    > You can check if the projections make sense by project the semantic labels from image to the target point cloud by:
+    > ```shell
+    > python script/project_multiview_labels.py --scene_id scene0000_00 --gt
+    > ```
 
 ## Usage
 ### Training
