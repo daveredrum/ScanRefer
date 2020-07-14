@@ -161,7 +161,10 @@ def eval_ref(args):
                     data_dict=data, 
                     config=DC,
                     reference=True, 
-                    use_lang_classifier=not args.no_lang_cls, 
+                    use_lang_classifier=not args.no_lang_cls,
+                    use_oracle=args.use_oracle,
+                    use_cat_rand=args.use_cat_rand,
+                    use_best=args.use_best,
                     post_processing=POST_DICT
                 )
 
@@ -440,6 +443,9 @@ if __name__ == "__main__":
     parser.add_argument("--use_multiview", action="store_true", help="Use multiview images.")
     parser.add_argument("--use_bidir", action="store_true", help="Use bi-directional GRU.")
     parser.add_argument("--use_train", action="store_true", help="Use train split in evaluation.")
+    parser.add_argument("--use_oracle", action="store_true", help="Use ground truth bounding boxes.")
+    parser.add_argument("--use_cat_rand", action="store_true", help="Use randomly selected bounding boxes from correct categories as outputs.")
+    parser.add_argument("--use_best", action="store_true", help="Use best bounding boxes as outputs.")
     parser.add_argument("--reference", action="store_true", help="evaluate the reference localization results")
     parser.add_argument("--detection", action="store_true", help="evaluate the object detection results")
     args = parser.parse_args()

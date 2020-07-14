@@ -119,6 +119,9 @@ class ScannetReferenceDataset(Dataset):
         ref_size_class_label = 0
         ref_size_residual_label = np.zeros(3) # bbox size residual for reference target
 
+        num_bbox = 1
+        point_votes = np.zeros([self.num_points, 3])
+        point_votes_mask = np.zeros(self.num_points)
         if self.split != "test":
             num_bbox = instance_bboxes.shape[0] if instance_bboxes.shape[0] < MAX_NUM_OBJ else MAX_NUM_OBJ
             target_bboxes_mask[0:num_bbox] = 1
@@ -163,8 +166,6 @@ class ScannetReferenceDataset(Dataset):
             # pc instance_labels (it had been filtered 
             # in the data preparation step) we'll compute the instance bbox
             # from the points sharing the same instance label. 
-            point_votes = np.zeros([self.num_points, 3])
-            point_votes_mask = np.zeros(self.num_points)
             for i_instance in np.unique(instance_labels):            
                 # find all points belong to that instance
                 ind = np.where(instance_labels == i_instance)[0]
@@ -192,6 +193,14 @@ class ScannetReferenceDataset(Dataset):
                     ref_size_class_label = size_classes[i]
                     ref_size_residual_label = size_residuals[i]
             
+        target_bboxes_semcls = np.zeros((MAX_NUM_OBJ))
+        try:
+            target_bboxes_semcls[0:num_bbox] = [DC.nyu40id2class[int(x)] for x in instance_bboxes[:,-2][0:num_bbox]]
+        except KeyError:
+            pass
+
+        object_cat = self.raw2label[object_name] if object_name in self.raw2label else 17
+
         data_dict = {}
         data_dict["point_clouds"] = point_cloud.astype(np.float32) # point cloud data including features
         data_dict["lang_feat"] = lang_feat.astype(np.float32) # language feature vectors
@@ -201,8 +210,6 @@ class ScannetReferenceDataset(Dataset):
         data_dict["heading_residual_label"] = angle_residuals.astype(np.float32) # (MAX_NUM_OBJ,)
         data_dict["size_class_label"] = size_classes.astype(np.int64) # (MAX_NUM_OBJ,) with int values in 0,...,NUM_SIZE_CLUSTER
         data_dict["size_residual_label"] = size_residuals.astype(np.float32) # (MAX_NUM_OBJ, 3)
-        target_bboxes_semcls = np.zeros((MAX_NUM_OBJ))                                
-        target_bboxes_semcls[0:num_bbox] = [DC.nyu40id2class[int(x)] for x in instance_bboxes[:,-2][0:num_bbox]]                 
         data_dict["num_bbox"] = np.array(num_bbox).astype(np.int64)
         data_dict["sem_cls_label"] = target_bboxes_semcls.astype(np.int64) # (MAX_NUM_OBJ,) semantic class index
         data_dict["box_label_mask"] = target_bboxes_mask.astype(np.float32) # (MAX_NUM_OBJ) as 0/1 with 1 indicating a unique box
@@ -219,7 +226,7 @@ class ScannetReferenceDataset(Dataset):
         data_dict["ref_size_residual_label"] = ref_size_residual_label.astype(np.float32)
         data_dict["object_id"] = np.array(int(object_id)).astype(np.int64)
         data_dict["ann_id"] = np.array(int(ann_id)).astype(np.int64)
-        data_dict["object_cat"] = np.array(self.raw2label[object_name]).astype(np.int64)
+        data_dict["object_cat"] = np.array(object_cat).astype(np.int64)
         data_dict["unique_multiple"] = np.array(self.unique_multiple_lookup[scene_id][str(object_id)][ann_id]).astype(np.int64)
         data_dict["pcl_color"] = pcl_color
         data_dict["load_time"] = time.time() - start
@@ -263,7 +270,10 @@ class ScannetReferenceDataset(Dataset):
 
             if object_id not in cache[scene_id]:
                 cache[scene_id][object_id] = {}
-                all_sem_labels[scene_id].append(self.raw2label[object_name])
+                try:
+                    all_sem_labels[scene_id].append(self.raw2label[object_name])
+                except KeyError:
+                    all_sem_labels[scene_id].append(17)
 
         # convert to numpy array
         all_sem_labels = {scene_id: np.array(all_sem_labels[scene_id]) for scene_id in all_sem_labels.keys()}
@@ -275,7 +285,10 @@ class ScannetReferenceDataset(Dataset):
             object_name = " ".join(data["object_name"].split("_"))
             ann_id = data["ann_id"]
 
-            sem_label = self.raw2label[object_name]
+            try:
+                sem_label = self.raw2label[object_name]
+            except KeyError:
+                sem_label = 17
 
             unique_multiple = 0 if (all_sem_labels[scene_id] == sem_label).sum() == 1 else 1
 

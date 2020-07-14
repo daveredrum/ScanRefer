@@ -19,6 +19,8 @@ from lib.config import CONF
 from lib.dataset import ScannetReferenceDataset
 from lib.solver import Solver
 from lib.ap_helper import APCalculator, parse_predictions, parse_groundtruths
+from lib.loss_helper import get_loss
+from lib.eval_helper import get_eval
 from models.refnet import RefNet
 from utils.box_util import get_3d_box, box3d_iou
 from data.scannet.model_util_scannet import ScannetDatasetConfig
@@ -38,7 +40,7 @@ def get_dataloader(args, scanrefer, all_scene_list, split, config):
     )
     print("predict for {} samples".format(len(dataset)))
 
-    dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
+    dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False)
 
     return dataset, dataloader
 
@@ -104,10 +106,19 @@ def predict(args):
 
     # predict
     print("predicting...")
-    pred_bbox = []
+    pred_bboxes = []
     for data_dict in tqdm(dataloader):
         for key in data_dict:
             data_dict[key] = data_dict[key].cuda()
+
+        # feed
+        data_dict = model(data_dict)
+        _, data_dict = get_loss(
+            data_dict=data_dict, 
+            config=DC, 
+            detection=False,
+            reference=True
+        )
 
         objectness_preds_batch = torch.argmax(data_dict['objectness_scores'], 2).long()
 
@@ -144,6 +155,12 @@ def predict(args):
             )
             pred_bbox = get_3d_box(pred_obb[3:6], pred_obb[6], pred_obb[0:3])
 
+            # construct the multiple mask
+            multiple = data_dict["unique_multiple"][i].item()
+
+            # construct the others mask
+            others = 1 if data_dict["object_cat"][i] == 17 else 0
+
             # store data
             scanrefer_idx = data_dict["scan_idx"][i].item()
             pred_data = {
@@ -151,14 +168,16 @@ def predict(args):
                 "object_id": scanrefer[scanrefer_idx]["object_id"],
                 "ann_id": scanrefer[scanrefer_idx]["ann_id"],
                 "bbox": pred_bbox.tolist(),
+                "unique_multiple": multiple,
+                "others": others
             }
-            pred_bbox.append(pred_data)
+            pred_bboxes.append(pred_data)
 
     # dump
     print("dumping...")
     pred_path = os.path.join(CONF.PATH.OUTPUT, args.folder, "pred.json")
     with open(pred_path, "w") as f:
-        json.dump(pred_bbox, f, indent=4)
+        json.dump(pred_bboxes, f, indent=4)
 
     print("done!")
 

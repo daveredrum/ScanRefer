@@ -42,7 +42,7 @@ def construct_bbox_corners(center, box_size):
 
     return corners_3d
 
-def get_eval(data_dict, config, reference, use_lang_classifier=False, post_processing=None):
+def get_eval(data_dict, config, reference, use_lang_classifier=False, use_oracle=False, use_cat_rand=False, use_best=False, post_processing=None):
     """ Loss functions
 
     Args:
@@ -89,19 +89,57 @@ def get_eval(data_dict, config, reference, use_lang_classifier=False, post_proce
     data_dict["ref_acc"] = ref_acc.cpu().numpy().tolist()
 
     # compute localization metrics
-    pred_ref = torch.argmax(data_dict['cluster_ref'] * pred_masks, 1) # (B,)
-    # store the calibrated predictions and masks
-    data_dict['cluster_ref'] = data_dict['cluster_ref'] * pred_masks
+    if use_best:
+        pred_ref = torch.argmax(data_dict["cluster_labels"], 1) # (B,)
+        # store the calibrated predictions and masks
+        data_dict['cluster_ref'] = data_dict["cluster_labels"]
+    if use_cat_rand:
+        cluster_preds = torch.zeros(cluster_labels.shape).cuda()
+        for i in range(cluster_preds.shape[0]):
+            num_bbox = data_dict["num_bbox"][i]
+            sem_cls_label = data_dict["sem_cls_label"][i]
+            # sem_cls_label = torch.argmax(end_points["sem_cls_scores"], 2)[i]
+            sem_cls_label[num_bbox:] -= 1
+            candidate_masks = torch.gather(sem_cls_label == data_dict["object_cat"][i], 0, data_dict["object_assignment"][i])
+            candidates = torch.arange(cluster_labels.shape[1])[candidate_masks]
+            try:
+                chosen_idx = torch.randperm(candidates.shape[0])[0]
+                chosen_candidate = candidates[chosen_idx]
+                cluster_preds[i, chosen_candidate] = 1
+            except IndexError:
+                cluster_preds[i, candidates] = 1
+        
+        pred_ref = torch.argmax(cluster_preds, 1) # (B,)
+        # store the calibrated predictions and masks
+        data_dict['cluster_ref'] = cluster_preds
+    else:
+        pred_ref = torch.argmax(data_dict['cluster_ref'] * pred_masks, 1) # (B,)
+        # store the calibrated predictions and masks
+        data_dict['cluster_ref'] = data_dict['cluster_ref'] * pred_masks
 
-    pred_center = data_dict['center'] # (B,K,3)
-    pred_heading_class = torch.argmax(data_dict['heading_scores'], -1) # B,num_proposal
-    pred_heading_residual = torch.gather(data_dict['heading_residuals'], 2, pred_heading_class.unsqueeze(-1)) # B,num_proposal,1
-    pred_heading_class = pred_heading_class # B,num_proposal
-    pred_heading_residual = pred_heading_residual.squeeze(2) # B,num_proposal
-    pred_size_class = torch.argmax(data_dict['size_scores'], -1) # B,num_proposal
-    pred_size_residual = torch.gather(data_dict['size_residuals'], 2, pred_size_class.unsqueeze(-1).unsqueeze(-1).repeat(1,1,1,3)) # B,num_proposal,1,3
-    pred_size_class = pred_size_class
-    pred_size_residual = pred_size_residual.squeeze(2) # B,num_proposal,3
+    if use_oracle:
+        pred_center = data_dict['center_label'] # (B,MAX_NUM_OBJ,3)
+        pred_heading_class = data_dict['heading_class_label'] # B,K2
+        pred_heading_residual = data_dict['heading_residual_label'] # B,K2
+        pred_size_class = data_dict['size_class_label'] # B,K2
+        pred_size_residual = data_dict['size_residual_label'] # B,K2,3
+
+        # assign
+        pred_center = torch.gather(pred_center, 1, data_dict["object_assignment"].unsqueeze(2).repeat(1, 1, 3))
+        pred_heading_class = torch.gather(pred_heading_class, 1, data_dict["object_assignment"])
+        pred_heading_residual = torch.gather(pred_heading_residual, 1, data_dict["object_assignment"]).unsqueeze(-1)
+        pred_size_class = torch.gather(pred_size_class, 1, data_dict["object_assignment"])
+        pred_size_residual = torch.gather(pred_size_residual, 1, data_dict["object_assignment"].unsqueeze(2).repeat(1, 1, 3))
+    else:
+        pred_center = data_dict['center'] # (B,K,3)
+        pred_heading_class = torch.argmax(data_dict['heading_scores'], -1) # B,num_proposal
+        pred_heading_residual = torch.gather(data_dict['heading_residuals'], 2, pred_heading_class.unsqueeze(-1)) # B,num_proposal,1
+        pred_heading_class = pred_heading_class # B,num_proposal
+        pred_heading_residual = pred_heading_residual.squeeze(2) # B,num_proposal
+        pred_size_class = torch.argmax(data_dict['size_scores'], -1) # B,num_proposal
+        pred_size_residual = torch.gather(data_dict['size_residuals'], 2, pred_size_class.unsqueeze(-1).unsqueeze(-1).repeat(1,1,1,3)) # B,num_proposal,1,3
+        pred_size_class = pred_size_class
+        pred_size_residual = pred_size_residual.squeeze(2) # B,num_proposal,3
 
     # store
     data_dict["pred_mask"] = pred_masks
