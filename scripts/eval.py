@@ -153,7 +153,7 @@ def eval_ref(args):
                 _, data = get_loss(
                     data_dict=data, 
                     config=DC, 
-                    detection=False,
+                    detection=True,
                     reference=True, 
                     use_lang_classifier=not args.no_lang_cls
                 )
