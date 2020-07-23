@@ -19,3 +19,6 @@ lib/pointnet2/pointnet2.egg-info/
 
 # output
 outputs/
+
+# delete
+docs/.DS_Store

@@ -4,9 +4,9 @@
 
 ## Introduction
 
-We introduce the new task of 3D object localization in RGB-D scans using natural language descriptions. As input, we assume a point cloud of a scanned 3D scene along with a free-form description of a specified target object. To address this task, we propose ScanRefer, where the core idea is to learn a fused descriptor from 3D object proposals and encoded sentence embeddings. This learned descriptor then correlates the language expressions with the underlying geometric features of the 3D scan and facilitates the regression of the 3D bounding box of the target object. In order to train and benchmark our method, we introduce a new ScanRefer dataset, containing 46,173 descriptions of 9,943 objects from 703 [ScanNet](http://www.scan-net.org/) scenes. ScanRefer is the first large-scale effort to perform object localization via natural language expression directly in 3D.
+We introduce the new task of 3D object localization in RGB-D scans using natural language descriptions. As input, we assume a point cloud of a scanned 3D scene along with a free-form description of a specified target object. To address this task, we propose ScanRefer, where the core idea is to learn a fused descriptor from 3D object proposals and encoded sentence embeddings. This learned descriptor then correlates the language expressions with the underlying geometric features of the 3D scan and facilitates the regression of the 3D bounding box of the target object. In order to train and benchmark our method, we introduce a new ScanRefer dataset, containing 51,583 descriptions of 11,046 objects from 800 [ScanNet](http://www.scan-net.org/) scenes. ScanRefer is the first large-scale effort to perform object localization via natural language expression directly in 3D.
 
-Please also check out the project video [here](https://youtu.be/T9J5t-UEcNA).
+Please also check out the project website [here](https://daveredrum.github.io/ScanRefer/).
 
 For additional detail, please see the ScanRefer paper:  
 "[ScanRefer: 3D Object Localization in RGB-D Scans using Natural Language](https://arxiv.org/abs/1912.08830)"  
@@ -110,6 +110,15 @@ To predict the localization results predicted by the trained ScanRefer model in 
 python scripts/visualize.py --folder <folder_name> --scene_id <scene_id> --use_color
 ```
 Note that the flags must match the ones set before training. The training information is stored in `outputs/<folder_name>/info.json`. The output `.ply` files will be stored under `outputs/<folder_name>/vis/<scene_id>/`
+
+## Benchmark Challenge
+We provide the ScanRefer Benchmark Challenge for benchmarking your model on the hidden test set. Learn more at our [benchmark challenge website](http://kaldir.vc.in.tum.de/scanrefer_benchmark/).
+After finishing training the model, please download [the benchmark data](http://kaldir.vc.in.tum.de/scanrefer_benchmark_data.zip) and put the unzipped `ScanRefer_filtered_test.json` under `data/`. Then, you can run the following script the generate predictions:
+```shell
+python scripts/predict.py --folder <folder_name> --use_color
+```
+Note that the flags must match the ones set before training. The training information is stored in `outputs/<folder_name>/info.json`. The generated predictions are stored in `outputs/<folder_name>/pred.json`.
+For submitting the predictions, please compress the `pred.json` as a .zip or .7z file and follow the [instructions](http://kaldir.vc.in.tum.de/scanrefer_benchmark/documentation) to upload your results.
 
 ## Changelog
 06/16/2020: Fixed the issue with multiview features.
