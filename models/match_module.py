@@ -13,7 +13,16 @@ class MatchModule(nn.Module):
             nn.Conv1d(self.lang_size + 128, hidden_size, 1),
             nn.ReLU()
         )
-        self.match = nn.Conv1d(hidden_size, 1, 1)
+        # self.match = nn.Conv1d(hidden_size, 1, 1)
+        self.match = nn.Sequential(
+            nn.Conv1d(hidden_size, hidden_size, 1),
+            nn.ReLU(),
+            nn.BatchNorm1d(hidden_size),
+            nn.Conv1d(hidden_size, hidden_size, 1),
+            nn.ReLU(),
+            nn.BatchNorm1d(hidden_size),
+            nn.Conv1d(hidden_size, 1, 1)
+        )
 
     def forward(self, data_dict):
         """

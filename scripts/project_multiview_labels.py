@@ -1,17 +1,19 @@
 import os
 import sys
 import h5py
+import math
+import argparse
 import torch
 import torch.nn as nn
-import argparse
 import numpy as np
-from tqdm import tqdm
-from plyfile import PlyData, PlyElement
-import math
 import pandas as pd
+import torchvision.transforms as transforms
+
 from imageio import imread
 from PIL import Image
-import torchvision.transforms as transforms
+from tqdm import tqdm
+from plyfile import PlyData, PlyElement
+from collections import Counter
 
 sys.path.append(os.path.join(os.getcwd())) # HACK add the root folder
 from lib.config import CONF
@@ -228,6 +230,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--scene_id", type=str, default="-1")
     parser.add_argument("--gt", action="store_true")
+    parser.add_argument("--maxpool", action="store_true", help="use max pooling to aggregate features \
+         (use majority voting in label projection mode)")
     args = parser.parse_args()
 
     scene_list = get_scene_list(args)
@@ -257,23 +261,77 @@ if __name__ == "__main__":
 
             projections.append((frame_list[i], projection_3d[i], projection_2d[i]))
 
+        # # project
+        # labels = None
+        # for i, projection in enumerate(projections):
+        #     frame_id = projection[0]
+        #     projection_3d = projection[1]
+        #     projection_2d = projection[2]
+        #     if args.gt:
+        #         feat = to_tensor(load_image(ENET_GT_PATH.format(scene_id, "labelv2", "{}.png".format(frame_id)), [41, 32])).unsqueeze(0)
+        #     else:
+        #         image = load_image(SCANNET_FRAME_PATH.format(scene_id, "color", "{}.jpg".format(frame_id)), [328, 256])
+        #         feat = enet(to_tensor(image).unsqueeze(0)).max(1)[1].unsqueeze(1)
+
+        #     proj_label = PROJECTOR.project(feat, projection_3d, projection_2d, scene.shape[0]).transpose(1, 0)
+        #     if i == 0:
+        #         labels = proj_label
+        #     else:
+        #         labels[labels == 0] = proj_label[labels == 0]
+
         # project
-        labels = None
+        labels = to_tensor(scene).new(scene.shape[0], len(projections)).fill_(0).long()
         for i, projection in enumerate(projections):
             frame_id = projection[0]
             projection_3d = projection[1]
             projection_2d = projection[2]
+            
             if args.gt:
                 feat = to_tensor(load_image(ENET_GT_PATH.format(scene_id, "labelv2", "{}.png".format(frame_id)), [41, 32])).unsqueeze(0)
             else:
                 image = load_image(SCANNET_FRAME_PATH.format(scene_id, "color", "{}.jpg".format(frame_id)), [328, 256])
                 feat = enet(to_tensor(image).unsqueeze(0)).max(1)[1].unsqueeze(1)
 
-            proj_label = PROJECTOR.project(feat, projection_3d, projection_2d, scene.shape[0]).transpose(1, 0)
-            if i == 0:
-                labels = proj_label
+            proj_label = PROJECTOR.project(feat, projection_3d, projection_2d, scene.shape[0]).transpose(1, 0) # num_points, 1
+
+            if args.maxpool:
+                # only apply max pooling on the overlapping points
+                # find out the points that are covered in projection
+                feat_mask = ((proj_label == 0).sum(1) != 1).bool()
+                # find out the points that are not filled with labels
+                point_mask = ((labels == 0).sum(1) == len(projections)).bool()
+
+                # for the points that are not filled with features
+                # and are covered in projection, 
+                # simply fill those points with labels
+                mask = point_mask * feat_mask
+                labels[mask, i] = proj_label[mask, 0]
+
+                # for the points that have already been filled with features
+                # and are covered in projection, 
+                # simply fill those points with labels
+                mask = ~point_mask * feat_mask
+                labels[mask, i] = proj_label[mask, 0]
             else:
-                labels[labels == 0] = proj_label[labels == 0]
+                if i == 0:
+                    labels = proj_label
+                else:
+                    labels[labels == 0] = proj_label[labels == 0]
+
+        # aggregate
+        if args.maxpool:
+            new_labels = []
+            for label_id in range(labels.shape[0]):
+                point_label = labels[label_id].cpu().numpy().tolist()
+                count = dict(Counter(point_label))
+                count = sorted(count.items(), key=lambda x: x[1], reverse=True)
+                count = [c for c in count if c[0] != 0]
+                if count:
+                    new_labels.append(count[0][0])
+                else:
+                    new_labels.append(0)
+
+            labels = torch.FloatTensor(np.array(new_labels)[:, np.newaxis])
 
         # output
         visualize(scene, labels.long().squeeze(1).cpu().numpy())

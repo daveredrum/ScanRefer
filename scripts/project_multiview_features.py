@@ -107,11 +107,21 @@ def compute_projection(points, depth, camera_to_world):
         if indices:
             indices_3ds[i] = indices[0].long()
             indices_2ds[i] = indices[1].long()
-            print("found {} mapping in {} points from frame {}".format(indices_3ds[i][0], num_points, i))
+            print("found {} mappings in {} points from frame {}".format(indices_3ds[i][0], num_points, i))
         
     return indices_3ds, indices_2ds
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--gpu', type=str, help='gpu', default='0')
+    parser.add_argument("--maxpool", action="store_true", help="use max pooling to aggregate features \
+         (use majority voting in label projection mode)")
+    args = parser.parse_args()
+
+    # setting
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+    os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
+
     scene_list = get_scene_list()
     scene_data = get_scene_data(scene_list)
     with h5py.File(ENET_FEATURE_DATABASE, "w", libver="latest") as database:
@@ -141,6 +151,20 @@ if __name__ == "__main__":
 
                 projections.append((frame_list[i], projection_3d[i], projection_2d[i]))
 
+            # # project
+            # point_features = to_tensor(scene).new(scene.shape[0], 128).fill_(0)
+            # for i, projection in enumerate(projections):
+            #     frame_id = projection[0]
+            #     projection_3d = projection[1]
+            #     projection_2d = projection[2]
+            #     feat = to_tensor(np.load(ENET_FEATURE_PATH.format(scene_id, frame_id)))
+            #     proj_feat = PROJECTOR.project(feat, projection_3d, projection_2d, scene.shape[0]).transpose(1, 0)
+            #     if i == 0:
+            #         point_features = proj_feat
+            #     else:
+            #         mask = ((point_features == 0).sum(1) == 128).nonzero().squeeze(1)
+            #         point_features[mask] = proj_feat[mask]
+
             # project
             point_features = to_tensor(scene).new(scene.shape[0], 128).fill_(0)
             for i, projection in enumerate(projections):
@@ -148,12 +172,33 @@ if __name__ == "__main__":
                 projection_3d = projection[1]
                 projection_2d = projection[2]
                 feat = to_tensor(np.load(ENET_FEATURE_PATH.format(scene_id, frame_id)))
+                
                 proj_feat = PROJECTOR.project(feat, projection_3d, projection_2d, scene.shape[0]).transpose(1, 0)
-                if i == 0:
-                    point_features = proj_feat
-                else:
-                    mask = ((point_features == 0).sum(1) == 128).nonzero().squeeze(1)
+                
+                if args.maxpool:
+                    # only apply max pooling on the overlapping points
+                    # find out the points that are covered in projection
+                    feat_mask = ((proj_feat == 0).sum(1) != 128).bool()
+                    # find out the points that are not filled with features
+                    point_mask = ((point_features == 0).sum(1) == 128).bool()
+
+                    # for the points that are not filled with features
+                    # and are covered in projection, 
+                    # simply fill those points with projected features
+                    mask = point_mask * feat_mask
                     point_features[mask] = proj_feat[mask]
+
+                    # for the points that have already been filled with features
+                    # and are covered in projection, 
+                    # apply max pooling first and then fill with pooled values
+                    mask = ~point_mask * feat_mask
+                    point_features[mask] = torch.max(point_features[mask], proj_feat[mask])
+                else:
+                    if i == 0:
+                        point_features = proj_feat
+                    else:
+                        mask = (point_features == 0).sum(1) == 128
+                        point_features[mask] = proj_feat[mask]
 
             # save
             database.create_dataset(scene_id, data=point_features.cpu().numpy())
