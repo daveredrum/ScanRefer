@@ -125,8 +125,8 @@ For reproducing our results in the paper, please run the following commands:
 
 |Name|Command|Pre-trained Weights|
 |---|---|---|
-|xyz+rgb+normals+lobjcls|python script/train.py --use_color --use_normal --epoch 70|[weights](http://kaldir.vc.in.tum.de/scanrefer_pretrained_color.zip)
-|xyz+multiview+normals+lobjcls|python script/train.py --use_multiview --use_normal --epoch 70|[weights](http://kaldir.vc.in.tum.de/scanrefer_pretrained_multiview.zip)
+|xyz+rgb+normals+lobjcls|```python script/train.py --use_color --use_normal --epoch 70```|[weights](http://kaldir.vc.in.tum.de/scanrefer_pretrained_color.zip)
+|xyz+multiview+normals+lobjcls|```python script/train.py --use_multiview --use_normal --epoch 70```|[weights](http://kaldir.vc.in.tum.de/scanrefer_pretrained_multiview.zip)
 
 If you would like to try out the pre-trained models, please download the model weights and extract the folder to `outputs/`.
 
