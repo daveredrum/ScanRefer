@@ -100,7 +100,7 @@ For more training options (like using preprocessed multiview features), please r
 ### Evaluation
 To evaluate the trained ScanRefer models, please find the folder under `outputs/` with the current timestamp and run:
 ```shell
-python scripts/eval.py --folder <folder_name> --use_color
+python scripts/eval.py --folder <folder_name> --reference --use_color --no_nms --force --repeat 5
 ```
 Note that the flags must match the ones set before training. The training information is stored in `outputs/<folder_name>/info.json`
 
@@ -120,7 +120,19 @@ python scripts/predict.py --folder <folder_name> --use_color
 Note that the flags must match the ones set before training. The training information is stored in `outputs/<folder_name>/info.json`. The generated predictions are stored in `outputs/<folder_name>/pred.json`.
 For submitting the predictions, please compress the `pred.json` as a .zip or .7z file and follow the [instructions](http://kaldir.vc.in.tum.de/scanrefer_benchmark/documentation) to upload your results.
 
+## Models
+For reproducing our results in the paper, please run the following commands:
+
+|Name|Command|Pre-trained Weights|
+|---|---|---|
+|xyz+rgb+normals+lobjcls|python script/train.py --use_color --use_normal --epoch 70|[weights](http://kaldir.vc.in.tum.de/scanrefer_pretrained_color.zip)
+|xyz+multiview+normals+lobjcls|python script/train.py --use_multiview --use_normal --epoch 70|[weights](http://kaldir.vc.in.tum.de/scanrefer_pretrained_multiview.zip)
+
+If you would like to try out the pre-trained models, please download the model weights and extract the folder to `outputs/`.
+
 ## Changelog
+08/03/2020: Fixed the issue with `lib/solver.py` and `script/eval.py`.
+
 06/16/2020: Fixed the issue with multiview features.
 
 01/31/2020: Fixed the issue with bad tokens.
@@ -132,13 +144,11 @@ For submitting the predictions, please compress the `pred.json` as a .zip or .7z
 If you use the ScanRefer data or code in your work, please kindly cite our work and the original ScanNet paper:
 
 ```
-@misc{chen2019scanrefer,
+@article{chen2020scanrefer,
     title={ScanRefer: 3D Object Localization in RGB-D Scans using Natural Language},
-    author={Dave Zhenyu Chen and Angel X. Chang and Matthias Nießner},
-    year={2019},
-    eprint={1912.08830},
-    archivePrefix={arXiv},
-    primaryClass={cs.CV}
+    author={Chen, Dave Zhenyu and Chang, Angel X and Nie{\ss}ner, Matthias},
+    journal={16th European Conference on Computer Vision (ECCV)},
+    year={2020}
 }
 
 @inproceedings{dai2017scannet,

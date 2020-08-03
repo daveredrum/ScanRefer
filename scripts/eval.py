@@ -327,7 +327,8 @@ def eval_ref(args):
         scores["overall"][k_o]["ref_acc"] = np.mean(ref_accs)
         scores["overall"][k_o]["acc@0.25iou"] = np.mean(acc_025ious)
         scores["overall"][k_o]["acc@0.5iou"] = np.mean(acc_05ious)
-    
+   
+    ref_accs, acc_025ious, acc_05ious = [], [], []
     for i in range(masks.shape[0]):
         running_ref_acc = np.mean(ref_acc[i])
         running_acc_025iou = ious[i][ious[i] >= 0.25].shape[0] / ious[i].shape[0]

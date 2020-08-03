@@ -125,32 +125,11 @@ class Solver():
             "iou_rate_0.5": -float("inf")
         }
 
-        # log
+        # init log
         # contains all necessary info for all phases
         self.log = {
-            phase: {
-                # info
-                "forward": [],
-                "backward": [],
-                "eval": [],
-                "fetch": [],
-                "iter_time": [],
-                # loss (float, not torch.cuda.FloatTensor)
-                "loss": [],
-                "ref_loss": [],
-                "lang_loss": [],
-                "objectness_loss": [],
-                "vote_loss": [],
-                "box_loss": [],
-                # scores (float, not torch.cuda.FloatTensor)
-                "lang_acc": [],
-                "ref_acc": [],
-                "obj_acc": [],
-                "pos_ratio": [],
-                "neg_ratio": [],
-                "iou_rate_0.25": [],
-                "iou_rate_0.5": []
-            } for phase in ["train", "val"]
+            "train": {},
+            "val": {}
         }
         
         # tensorboard
@@ -238,6 +217,31 @@ class Solver():
         self.log_fout.flush()
         print(info_str)
 
+    def _reset_log(self, phase):
+        self.log[phase] = {
+            # info
+            "forward": [],
+            "backward": [],
+            "eval": [],
+            "fetch": [],
+            "iter_time": [],
+            # loss (float, not torch.cuda.FloatTensor)
+            "loss": [],
+            "ref_loss": [],
+            "lang_loss": [],
+            "objectness_loss": [],
+            "vote_loss": [],
+            "box_loss": [],
+            # scores (float, not torch.cuda.FloatTensor)
+            "lang_acc": [],
+            "ref_acc": [],
+            "obj_acc": [],
+            "pos_ratio": [],
+            "neg_ratio": [],
+            "iou_rate_0.25": [],
+            "iou_rate_0.5": []
+        }
+
     def _set_phase(self, phase):
         if phase == "train":
             self.model.train()
@@ -294,6 +298,9 @@ class Solver():
     def _feed(self, dataloader, phase, epoch_id):
         # switch mode
         self._set_phase(phase)
+
+        # re-init log
+        self._reset_log(phase)
 
         # change dataloader
         dataloader = dataloader if phase == "train" else tqdm(dataloader)
