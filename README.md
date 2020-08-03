@@ -1,6 +1,6 @@
 # ScanRefer: 3D Object Localization in RGB-D Scans using Natural Language
 
-<p align="center"><img src="demo/ScanRefer.gif"/></p>
+<p align="center"><img src="demo/ScanRefer.gif" width="800px"/></p>
 
 ## Introduction
 
