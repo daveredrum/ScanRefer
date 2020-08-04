@@ -123,7 +123,7 @@ For submitting the predictions, please compress the `pred.json` as a .zip or .7z
 ## Models
 For reproducing our results in the paper, we provide the following training commands and the corresponding pre-trained models:
 
-|Name|Command|Acc@0.5IoU|Weights|
+|Name|Command|Acc<!-- -->@<!-- -->0.5IoU|Weights|
 |---|---|---|---|
 |xyz+rgb+normals+lobjcls|```python script/train.py --use_color --use_normal --epoch 70```|24.35|[weights](http://kaldir.vc.in.tum.de/scanrefer_pretrained_color.zip)
 |xyz+multiview+normals+lobjcls|```python script/train.py --use_multiview --use_normal --epoch 70```|25.23|[weights](http://kaldir.vc.in.tum.de/scanrefer_pretrained_multiview.zip)
