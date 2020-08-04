@@ -121,14 +121,14 @@ Note that the flags must match the ones set before training. The training inform
 For submitting the predictions, please compress the `pred.json` as a .zip or .7z file and follow the [instructions](http://kaldir.vc.in.tum.de/scanrefer_benchmark/documentation) to upload your results.
 
 ## Models
-For reproducing our results in the paper, please run the following commands:
+For reproducing our results in the paper, we provide the following training commands and the corresponding pre-trained models:
 
-|Name|Command|Pre-trained Weights|
-|---|---|---|
-|xyz+rgb+normals+lobjcls|```python script/train.py --use_color --use_normal --epoch 70```|[weights](http://kaldir.vc.in.tum.de/scanrefer_pretrained_color.zip)
-|xyz+multiview+normals+lobjcls|```python script/train.py --use_multiview --use_normal --epoch 70```|[weights](http://kaldir.vc.in.tum.de/scanrefer_pretrained_multiview.zip)
+|Name|Command|Acc@0.5IoU|Weights|
+|---|---|---|---|
+|xyz+rgb+normals+lobjcls|```python script/train.py --use_color --use_normal --epoch 70```|24.35|[weights](http://kaldir.vc.in.tum.de/scanrefer_pretrained_color.zip)
+|xyz+multiview+normals+lobjcls|```python script/train.py --use_multiview --use_normal --epoch 70```|25.23|[weights](http://kaldir.vc.in.tum.de/scanrefer_pretrained_multiview.zip)
 
-If you would like to try out the pre-trained models, please download the model weights and extract the folder to `outputs/`.
+If you would like to try out the pre-trained models, please download the model weights and extract the folder to `outputs/`. Note that the results could be higher than those in the paper because of a few iterations of code refactoring and bug fixing.
 
 ## Changelog
 08/03/2020: Fixed the issue with `lib/solver.py` and `script/eval.py`.
