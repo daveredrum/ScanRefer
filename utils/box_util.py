@@ -103,20 +103,54 @@ def box3d_iou(corners1, corners2):
         iou_2d: bird's eye view 2D bounding box IoU
 
     '''
-    # corner points are in counter clockwise order
-    rect1 = [(corners1[i,0], corners1[i,2]) for i in range(3,-1,-1)]
-    rect2 = [(corners2[i,0], corners2[i,2]) for i in range(3,-1,-1)] 
-    area1 = poly_area(np.array(rect1)[:,0], np.array(rect1)[:,1])
-    area2 = poly_area(np.array(rect2)[:,0], np.array(rect2)[:,1])
-    inter, inter_area = convex_hull_intersection(rect1, rect2)
-    iou_2d = inter_area/(area1+area2-inter_area)
-    ymax = min(corners1[0,1], corners2[0,1])
-    ymin = max(corners1[4,1], corners2[4,1])
-    inter_vol = inter_area * max(0.0, ymax-ymin)
-    vol1 = box3d_vol(corners1)
-    vol2 = box3d_vol(corners2)
-    iou = inter_vol / (vol1 + vol2 - inter_vol)
-    return iou, iou_2d
+    # # corner points are in counter clockwise order
+    # rect1 = [(corners1[i,0], corners1[i,2]) for i in range(3,-1,-1)]
+    # rect2 = [(corners2[i,0], corners2[i,2]) for i in range(3,-1,-1)] 
+    # area1 = poly_area(np.array(rect1)[:,0], np.array(rect1)[:,1])
+    # area2 = poly_area(np.array(rect2)[:,0], np.array(rect2)[:,1])
+    # inter, inter_area = convex_hull_intersection(rect1, rect2)
+    # iou_2d = inter_area/(area1+area2-inter_area)
+    # ymax = min(corners1[0,1], corners2[0,1])
+    # ymin = max(corners1[4,1], corners2[4,1])
+    # inter_vol = inter_area * max(0.0, ymax-ymin)
+    # vol1 = box3d_vol(corners1)
+    # vol2 = box3d_vol(corners2)
+    # iou = inter_vol / (vol1 + vol2 - inter_vol)
+    # return iou, iou_2d
+
+    x_min_1, x_max_1, y_min_1, y_max_1, z_min_1, z_max_1 = get_box3d_min_max(corners1)
+    x_min_2, x_max_2, y_min_2, y_max_2, z_min_2, z_max_2 = get_box3d_min_max(corners2)
+    xA = np.maximum(x_min_1, x_min_2)
+    yA = np.maximum(y_min_1, y_min_2)
+    zA = np.maximum(z_min_1, z_min_2)
+    xB = np.minimum(x_max_1, x_max_2)
+    yB = np.minimum(y_max_1, y_max_2)
+    zB = np.minimum(z_max_1, z_max_2)
+    inter_vol = np.maximum((xB - xA + 1), 0) * np.maximum((yB - yA + 1), 0) * np.maximum((zB - zA + 1), 0)
+    box_vol_1 = (x_max_1 - x_min_1 + 1) * (y_max_1 - y_min_1 + 1) * (z_max_1 - z_min_1 + 1)
+    box_vol_2 = (x_max_2 - x_min_2 + 1) * (y_max_2 - y_min_2 + 1) * (z_max_2 - z_min_2 + 1)
+    iou = inter_vol / (box_vol_1 + box_vol_2 - inter_vol)
+
+    return iou
+
+def get_box3d_min_max(corner):
+    ''' Compute min and max coordinates for 3D bounding box
+        Note: only for axis-aligned bounding boxes
+
+    Input:
+        corners: numpy array (8,3), assume up direction is negative Y (batch of N samples)
+    Output:
+        box_min_max: an array for min and max coordinates of 3D bounding box IoU
+
+    '''
+
+    min_coord = corner.min(axis=0)
+    max_coord = corner.max(axis=0)
+    x_min, x_max = min_coord[0], max_coord[0]
+    y_min, y_max = min_coord[1], max_coord[1]
+    z_min, z_max = min_coord[2], max_coord[2]
+    
+    return x_min, x_max, y_min, y_max, z_min, z_max
 
 def box3d_iou_batch(corners1, corners2):
     ''' Compute 3D bounding box IoU.

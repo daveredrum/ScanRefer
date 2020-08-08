@@ -13,7 +13,7 @@ sys.path.append(os.path.join(os.getcwd(), "lib")) # HACK add the lib folder
 from utils.nn_distance import nn_distance, huber_loss
 from lib.ap_helper import parse_predictions
 from lib.loss import SoftmaxRankingLoss
-from utils.box_util import get_3d_box, get_3d_box_batch, box3d_iou, box3d_iou_batch
+from utils.box_util import get_3d_box, get_3d_box_batch, box3d_iou
 
 def eval_ref_one_sample(pred_bbox, gt_bbox):
     """ Evaluate one reference prediction
@@ -25,7 +25,7 @@ def eval_ref_one_sample(pred_bbox, gt_bbox):
         iou: intersection over union score
     """
 
-    iou, _ = box3d_iou(pred_bbox, gt_bbox)
+    iou = box3d_iou(pred_bbox, gt_bbox)
 
     return iou
 

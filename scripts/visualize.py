@@ -404,7 +404,7 @@ def dump_results(args, scanrefer, data, config):
         pred_obb = config.param2obb(pred_center[i, pred_ref_idx, 0:3], pred_heading_class[i, pred_ref_idx], pred_heading_residual[i, pred_ref_idx],
                 pred_size_class[i, pred_ref_idx], pred_size_residual[i, pred_ref_idx])
         pred_bbox = get_3d_box(pred_obb[3:6], pred_obb[6], pred_obb[0:3])
-        iou, _ = box3d_iou(gt_bbox, pred_bbox)
+        iou = box3d_iou(gt_bbox, pred_bbox)
 
         write_bbox(pred_obb, 1, os.path.join(scene_dump_dir, 'pred_{}_{}_{}_{:.5f}_{:.5f}.ply'.format(object_id, object_name, ann_id, pred_ref_scores_softmax[i, pred_ref_idx], iou)))
 

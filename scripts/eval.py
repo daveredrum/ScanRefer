@@ -22,7 +22,6 @@ from lib.ap_helper import APCalculator, parse_predictions, parse_groundtruths
 from lib.loss_helper import get_loss
 from lib.eval_helper import get_eval
 from models.refnet import RefNet
-from utils.box_util import get_3d_box, box3d_iou
 from data.scannet.model_util_scannet import ScannetDatasetConfig
 
 SCANREFER_TRAIN = json.load(open(os.path.join(CONF.PATH.DATA, "ScanRefer_filtered_train.json")))

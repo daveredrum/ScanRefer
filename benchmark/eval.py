@@ -58,7 +58,8 @@ def evaluate(args):
 
             try:
                 gt_bbox = np.array(organized_gt[scene_id][object_id][ann_id]["bbox"])
-                iou, _ = box3d_iou(pred_bbox, gt_bbox)
+                # iou, _ = box3d_iou(pred_bbox, gt_bbox)
+                iou = box3d_iou(pred_bbox, gt_bbox)
                 
             except KeyError:
                 iou = 0
