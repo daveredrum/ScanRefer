@@ -261,13 +261,16 @@ def get_3d_box(box_size, heading_angle, center):
     '''
     R = roty(heading_angle)
     l,w,h = box_size
-    x_corners = [l/2,l/2,-l/2,-l/2,l/2,l/2,-l/2,-l/2];
-    y_corners = [h/2,h/2,h/2,h/2,-h/2,-h/2,-h/2,-h/2];
-    z_corners = [w/2,-w/2,-w/2,w/2,w/2,-w/2,-w/2,w/2];
+    # x_corners = [l/2,l/2,-l/2,-l/2,l/2,l/2,-l/2,-l/2]
+    # y_corners = [h/2,h/2,h/2,h/2,-h/2,-h/2,-h/2,-h/2]
+    # z_corners = [w/2,-w/2,-w/2,w/2,w/2,-w/2,-w/2,w/2]
+    x_corners = [l/2,l/2,-l/2,-l/2,l/2,l/2,-l/2,-l/2]
+    y_corners = [w/2,-w/2,-w/2,w/2,w/2,-w/2,-w/2,w/2]
+    z_corners = [h/2,h/2,h/2,h/2,-h/2,-h/2,-h/2,-h/2]
     corners_3d = np.dot(R, np.vstack([x_corners,y_corners,z_corners]))
-    corners_3d[0,:] = corners_3d[0,:] + center[0];
-    corners_3d[1,:] = corners_3d[1,:] + center[1];
-    corners_3d[2,:] = corners_3d[2,:] + center[2];
+    corners_3d[0,:] = corners_3d[0,:] + center[0]
+    corners_3d[1,:] = corners_3d[1,:] + center[1]
+    corners_3d[2,:] = corners_3d[2,:] + center[2]
     corners_3d = np.transpose(corners_3d)
     return corners_3d
 
@@ -284,9 +287,12 @@ def get_3d_box_batch(box_size, heading_angle, center):
     w = np.expand_dims(box_size[...,1], -1)
     h = np.expand_dims(box_size[...,2], -1)
     corners_3d = np.zeros(tuple(list(input_shape)+[8,3]))
+    # corners_3d[...,:,0] = np.concatenate((l/2,l/2,-l/2,-l/2,l/2,l/2,-l/2,-l/2), -1)
+    # corners_3d[...,:,1] = np.concatenate((h/2,h/2,h/2,h/2,-h/2,-h/2,-h/2,-h/2), -1)
+    # corners_3d[...,:,2] = np.concatenate((w/2,-w/2,-w/2,w/2,w/2,-w/2,-w/2,w/2), -1)
     corners_3d[...,:,0] = np.concatenate((l/2,l/2,-l/2,-l/2,l/2,l/2,-l/2,-l/2), -1)
-    corners_3d[...,:,1] = np.concatenate((h/2,h/2,h/2,h/2,-h/2,-h/2,-h/2,-h/2), -1)
-    corners_3d[...,:,2] = np.concatenate((w/2,-w/2,-w/2,w/2,w/2,-w/2,-w/2,w/2), -1)
+    corners_3d[...,:,1] = np.concatenate((w/2,-w/2,-w/2,w/2,w/2,-w/2,-w/2,w/2), -1)
+    corners_3d[...,:,2] = np.concatenate((h/2,h/2,h/2,h/2,-h/2,-h/2,-h/2,-h/2), -1)
     tlist = [i for i in range(len(input_shape))]
     tlist += [len(input_shape)+1, len(input_shape)]
     corners_3d = np.matmul(corners_3d, np.transpose(R, tuple(tlist)))

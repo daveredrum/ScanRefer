@@ -131,6 +131,8 @@ For reproducing our results in the paper, we provide the following training comm
 If you would like to try out the pre-trained models, please download the model weights and extract the folder to `outputs/`. Note that the results could be higher than those in the paper because of a few iterations of code refactoring and bug fixing.
 
 ## Changelog
+08/08/2020: Fixed the issue with `lib/box_util.py`.
+
 08/03/2020: Fixed the issue with `lib/solver.py` and `script/eval.py`.
 
 06/16/2020: Fixed the issue with multiview features.
