@@ -120,14 +120,14 @@ class ScannetReferenceDataset(Dataset):
         ref_size_class_label = 0
         ref_size_residual_label = np.zeros(3) # bbox size residual for reference target
 
-        num_bbox = 1
-        point_votes = np.zeros([self.num_points, 3])
-        point_votes_mask = np.zeros(self.num_points)
         if self.split != "test":
             num_bbox = instance_bboxes.shape[0] if instance_bboxes.shape[0] < MAX_NUM_OBJ else MAX_NUM_OBJ
             target_bboxes_mask[0:num_bbox] = 1
             target_bboxes[0:num_bbox,:] = instance_bboxes[:MAX_NUM_OBJ,0:6]
-            
+
+            point_votes = np.zeros([self.num_points, 3])
+            point_votes_mask = np.zeros(self.num_points)
+
             # ------------------------------- DATA AUGMENTATION ------------------------------        
             if self.augment and not self.debug:
                 if np.random.random() > 0.5:
@@ -193,7 +193,11 @@ class ScannetReferenceDataset(Dataset):
                     ref_heading_residual_label = angle_residuals[i]
                     ref_size_class_label = size_classes[i]
                     ref_size_residual_label = size_residuals[i]
-            
+        else:
+            num_bbox = 1
+            point_votes = np.zeros([self.num_points, 9]) # make 3 votes identical 
+            point_votes_mask = np.zeros(self.num_points)
+
         target_bboxes_semcls = np.zeros((MAX_NUM_OBJ))
         try:
             target_bboxes_semcls[0:num_bbox] = [DC.nyu40id2class[int(x)] for x in instance_bboxes[:,-2][0:num_bbox]]
