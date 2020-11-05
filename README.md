@@ -123,14 +123,147 @@ Note that the flags must match the ones set before training. The training inform
 ## Models
 For reproducing our results in the paper, we provide the following training commands and the corresponding pre-trained models:
 
-|Name|Command|Acc<!-- -->@<!-- -->0.5IoU|Weights|
-|---|---|---|---|
-|xyz+rgb+normals+lobjcls|```python script/train.py --use_color --use_normal --epoch 70```|24.35|[weights](http://kaldir.vc.in.tum.de/scanrefer_pretrained_color.zip)
-|xyz+multiview+normals+lobjcls|```python script/train.py --use_multiview --use_normal --epoch 70```|25.23|[weights](http://kaldir.vc.in.tum.de/scanrefer_pretrained_multiview.zip)
+<table>
+    <col>
+    <col>
+    <colgroup span="2"></colgroup>
+    <colgroup span="2"></colgroup>
+    <colgroup span="2"></colgroup>
+    <col>
+    <tr>
+        <th rowspan=2>Name</th>
+        <th rowspan=2>Command</th>
+        <th colspan=2 scope="colgroup">Unique</th>
+        <th colspan=2 scope="colgroup">Multiple</th>
+        <th colspan=2 scope="colgroup">Overall</th>
+        <th rowspan=2>Weights</th>
+    </tr>
+    <tr>
+        <td>Acc<!-- -->@<!-- -->0.25IoU</td>
+        <td>Acc<!-- -->@<!-- -->0.5IoU</td>
+        <td>Acc<!-- -->@<!-- -->0.25IoU</td>
+        <td>Acc<!-- -->@<!-- -->0.5IoU</td>
+        <td>Acc<!-- -->@<!-- -->0.25IoU</td>
+        <td>Acc<!-- -->@<!-- -->0.5IoU</td>
+    </tr>
+    <tr>
+        <td>xyz</td>
+        <td><pre lang="shell">python script/train.py --no_lang_cls</pre></td>
+        <td>63.98</td>					
+        <td>43.57</td>
+        <td>29.28</td>
+        <td>18.99</td>
+        <td>36.01</td>
+        <td>23.76</td>
+        <td><a href=http://kaldir.vc.in.tum.de/scanrefer_pretrained_XYZ.zip>weights</a></td>
+    </tr>
+    <tr>
+        <td>xyz+rgb</td>
+        <td><pre lang="shell">python script/train.py --use_color --no_lang_cls</pre></td>
+        <td>63.24</td>					
+        <td>41.78</td>
+        <td>30.06</td>
+        <td>19.23</td>
+        <td>36.5</td>
+        <td>23.61</td>
+        <td><a href=http://kaldir.vc.in.tum.de/scanrefer_pretrained_XYZ_COLOR.zip>weights</a></td>
+    </tr>
+    <tr>
+        <td>xyz+rgb+normals</td>
+        <td><pre lang="shell">python script/train.py --use_color --use_normal --no_lang_cls</pre></td>
+        <td>64.63</td>					
+        <td>43.65</td>
+        <td>31.89</td>
+        <td>20.77</td>
+        <td>38.24</td>
+        <td>25.21</td>
+        <td><a href=http://kaldir.vc.in.tum.de/scanrefer_pretrained_XYZ_COLOR_NORMAL.zip>weights</a></td>
+    </tr>
+    <tr>
+        <td>xyz+multiview</td>
+        <td><pre lang="shell">python script/train.py --use_multiview --no_lang_cls</pre></td>
+        <td>77.2</td>					
+        <td>52.69</td>
+        <td>32.08</td>
+        <td>19.86</td>
+        <td>40.84</td>
+        <td>26.23</td>
+        <td><a href=http://kaldir.vc.in.tum.de/scanrefer_pretrained_XYZ_MULTIVIEW.zip>weights</a></td>
+    </tr>
+    <tr>
+        <td>xyz+multiview+normals</td>
+        <td><pre lang="shell">python script/train.py --use_multiview --use_normal --no_lang_cls</pre></td>
+        <td>78.22</td>					
+        <td>52.38</td>
+        <td>33.61</td>
+        <td>20.77</td>
+        <td>42.27</td>
+        <td>26.9</td>
+        <td><a href=http://kaldir.vc.in.tum.de/scanrefer_pretrained_XYZ_MULTIVIEW_NORMAL.zip>weights</a></td>
+    </tr>
+    <tr>
+        <td>xyz+lobjcls</td>
+        <td><pre lang="shell">python script/train.py</pre></td>
+        <td>64.31</td>										
+        <td>44.04</td>
+        <td>30.77</td>
+        <td>19.44</td>
+        <td>37.28</td>
+        <td>24.22</td>
+        <td><a href=http://kaldir.vc.in.tum.de/scanrefer_pretrained_XYZ_LANGCLS.zip>weights</a></td>
+    </tr>
+    <tr>
+        <td>xyz+rgb+lobjcls</td>
+        <td><pre lang="shell">python script/train.py --use_color</pre></td>
+        <td>65.00</td>										
+        <td>43.31</td>
+        <td>30.63</td>
+        <td>19.75</td>
+        <td>37.30</td>
+        <td>24.32</td>
+        <td><a href=http://kaldir.vc.in.tum.de/scanrefer_pretrained_XYZ_COLOR_LANGCLS.zip>weights</a></td>
+    </tr>
+    <tr>
+        <td>xyz+rgb+normals+lobjcls</td>
+        <td><pre lang="shell">python script/train.py --use_color --use_normal</pre></td>
+        <td>67.64</td>					
+        <td>46.19</td>
+        <td>32.06</td>
+        <td>21.26</td>
+        <td>38.97</td>
+        <td>26.10</td>
+        <td><a href=http://kaldir.vc.in.tum.de/scanrefer_pretrained_XYZ_COLOR_LANGCLS.zip>weights</a></td>
+    </tr>
+    <tr>
+        <td>xyz+multiview+lobjcls</td>
+        <td><pre lang="shell">python script/train.py --use_multiview</pre></td>
+        <td>76.00</td>															
+        <td>50.40</td>
+        <td>34.05</td>
+        <td>20.73</td>
+        <td>42.19</td>
+        <td>26.50</td>
+        <td><a href=http://kaldir.vc.in.tum.de/scanrefer_pretrained_XYZ_MULTIVIEW_LANGCLS.zip>weights</a></td>
+    </tr>
+    <tr>
+        <td>xyz+multiview+normals+lobjcls</td>
+        <td><pre lang="shell">python script/train.py --use_multiview --use_normal</pre></td>
+        <td>76.33</td>										
+        <td>53.51</td>
+        <td>32.73</td>
+        <td>21.11</td>
+        <td>41.19</td>
+        <td>27.40</td>
+        <td><a href=http://kaldir.vc.in.tum.de/scanrefer_pretrained_XYZ_MULTIVIEW_NORMAL_LANGCLS.zip>weights</a></td>
+    </tr>
+    
+</table>
 
 If you would like to try out the pre-trained models, please download the model weights and extract the folder to `outputs/`. Note that the results could be higher than those in the paper because of a few iterations of code refactoring and bug fixing.
 
 ## Changelog
+05/11/2020: Released pre-trained weights.
+
 08/08/2020: Fixed the issue with `lib/box_util.py`.
 
 08/03/2020: Fixed the issue with `lib/solver.py` and `script/eval.py`.
