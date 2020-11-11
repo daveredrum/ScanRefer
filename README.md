@@ -259,10 +259,12 @@ For reproducing our results in the paper, we provide the following training comm
     
 </table>
 
-If you would like to try out the pre-trained models, please download the model weights and extract the folder to `outputs/`. Note that the results could be higher than those in the paper because of a few iterations of code refactoring and bug fixing.
+If you would like to try out the pre-trained models, please download the model weights and extract the folder to `outputs/`. Note that the results are higher than before because of a few iterations of code refactoring and bug fixing.
 
 ## Changelog
-05/11/2020: Released pre-trained weights.
+11/11/2020: Updated paper with the improved results due to bug fixing.
+
+11/05/2020: Released pre-trained weights.
 
 08/08/2020: Fixed the issue with `lib/box_util.py`.
 
