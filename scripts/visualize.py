@@ -24,6 +24,7 @@ from lib.dataset import ScannetReferenceDataset
 from lib.solver import Solver
 from lib.ap_helper import APCalculator, parse_predictions, parse_groundtruths
 from lib.loss_helper import get_loss
+from lib.eval_helper import get_eval
 from lib.config import CONF
 
 # data
@@ -439,7 +440,19 @@ def visualize(args):
 
         # feed
         data = model(data)
-        _, data = get_loss(data, DC, True, True, POST_DICT)
+        # _, data = get_loss(data, DC, True, True, POST_DICT)
+        _, data = get_loss(
+            data_dict=data, 
+            config=DC, 
+            detection=True,
+            reference=True
+        )
+        data = get_eval(
+            data_dict=data, 
+            config=DC,
+            reference=True, 
+            post_processing=POST_DICT
+        )
         
         # visualize
         dump_results(args, scanrefer, data, DC)

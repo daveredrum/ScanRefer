@@ -23,6 +23,7 @@ outputs/
 
 # delete
 docs/.DS_Store
+demo/.DS_Store
 
 # misc
 upload/
