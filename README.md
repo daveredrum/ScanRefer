@@ -44,10 +44,12 @@ wget <download_link>
 ```
 
 ## Setup
-The code is tested on Ubuntu 16.04 LTS & 18.04 LTS with PyTorch 1.2.0 CUDA 10.0 installed. There are some issues with the newer version (>=1.3.0) of PyTorch. You might want to make sure you have installed the correct version. Otherwise, please execute the following command to install PyTorch:
+~~The code is tested on Ubuntu 16.04 LTS & 18.04 LTS with PyTorch 1.2.0 CUDA 10.0 installed. There are some issues with the newer version (>=1.3.0) of PyTorch. You might want to make sure you have installed the correct version. Otherwise, please execute the following command to install PyTorch:~~
+
+The code is now compatiable with PyTorch 1.6! Please execute the following command to install PyTorch
 
 ```shell
-conda install pytorch==1.2.0 torchvision==0.4.0 cudatoolkit=10.0 -c pytorch
+conda install pytorch==1.6.0 torchvision==0.7.0 cudatoolkit=10.2 -c pytorch
 ```
 
 Install the necessary packages listed out in `requirements.txt`:
@@ -63,7 +65,7 @@ __Before moving on to the next step, please don't forget to set the project root
 
 ### Data preparation
 1. Download the ScanRefer dataset and unzip it under `data/`. 
-2. Downloadand the preprocessed [GLoVE embeddings (~990MB)](http://kaldir.vc.in.tum.de/glove.p) and put them under `data/`.
+2. Download the preprocessed [GLoVE embeddings (~990MB)](http://kaldir.vc.in.tum.de/glove.p) and put them under `data/`.
 3. Download the ScanNetV2 dataset and put (or link) `scans/` under (or to) `data/scannet/scans/` (Please follow the [ScanNet Instructions](data/scannet/README.md) for downloading the ScanNet dataset).
 > After this step, there should be folders containing the ScanNet scene data under the `data/scannet/scans/` with names like `scene0000_00`
 4. Pre-process ScanNet data. A folder named `scannet_data/` will be generated under `data/scannet/` after running the following command. Roughly 3.8GB free space is needed for this step:
