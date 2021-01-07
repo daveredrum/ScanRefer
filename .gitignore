@@ -5,6 +5,7 @@ data/glove*
 data/scannet/scannet_data
 data/scannet/scans
 data/scannetv2_enet.pth
+data/download-scannet.py
 
 # cache
 data/scannet/__pycache__
@@ -12,11 +13,19 @@ lib/__pycache__
 lib/pointnet2/__pycache__
 models/__pycache__
 utils/__pycache__
+.ipynb_checkpoints/
+.vscode/
+data/__pycache__/
+util/__pycache__
+.spyproject/
 
 # pointnet2
 lib/pointnet2/build/
 lib/pointnet2/dist/
 lib/pointnet2/pointnet2.egg-info/
+
+# SparseConv
+lib/pointgroup_ops/
 
 # output
 outputs/
@@ -26,3 +35,4 @@ docs/.DS_Store
 
 # misc
 upload/
+exp/

@@ -18,7 +18,7 @@ from data.scannet.model_util_scannet import ScannetDatasetConfig
 from lib.dataset import ScannetReferenceDataset
 from lib.solver import Solver
 from lib.config import CONF
-from models.refnet import RefNet
+#from models.refnet import RefNet
 
 SCANREFER_TRAIN = json.load(open(os.path.join(CONF.PATH.DATA, "ScanRefer_filtered_train.json")))
 SCANREFER_VAL = json.load(open(os.path.join(CONF.PATH.DATA, "ScanRefer_filtered_val.json")))
@@ -165,7 +165,7 @@ def get_scannet_scene_list(split):
 
     return scene_list
 
-def get_scanrefer(scanrefer_train, scanrefer_val, num_scenes):
+def get_scanrefer(scanrefer_train, scanrefer_val, num_scenes, use_sparse_conv):
     if args.no_reference:
         train_scene_list = get_scannet_scene_list("train")
         new_scanrefer_train = []
@@ -210,7 +210,7 @@ def get_scanrefer(scanrefer_train, scanrefer_val, num_scenes):
 def train(args):
     # init training dataset
     print("preparing data...")
-    scanrefer_train, scanrefer_val, all_scene_list = get_scanrefer(SCANREFER_TRAIN, SCANREFER_VAL, args.num_scenes)
+    scanrefer_train, scanrefer_val, all_scene_list = get_scanrefer(SCANREFER_TRAIN, SCANREFER_VAL, args.num_scenes, args.use_sparseconv)
     scanrefer = {
         "train": scanrefer_train,
         "val": scanrefer_val
@@ -256,6 +256,7 @@ if __name__ == "__main__":
     parser.add_argument("--use_bidir", action="store_true", help="Use bi-directional GRU.")
     parser.add_argument("--use_pretrained", type=str, help="Specify the folder name containing the pretrained detection module.")
     parser.add_argument("--use_checkpoint", type=str, help="Specify the checkpoint root", default="")
+    parser.add_argument("--use_sparseconv", action="store_true", help="Use SparseConv Backbone.")
     args = parser.parse_args()
 
     # setting
