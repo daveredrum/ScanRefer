@@ -6,7 +6,7 @@ CONF = EasyDict()
 
 # path
 CONF.PATH = EasyDict()
-CONF.PATH.BASE = "/home/philipp/Documents/Studium_Master/semester_3/ADL4CV/project/code/ScanRefer" # TODO: change this
+CONF.PATH.BASE = "/home/nerfteam2/ScanRefer/" # TODO: change this
 CONF.PATH.DATA = os.path.join(CONF.PATH.BASE, "data")
 CONF.PATH.SCANNET = os.path.join(CONF.PATH.DATA, "scannet")
 CONF.PATH.LIB = os.path.join(CONF.PATH.BASE, "lib")
@@ -23,7 +23,7 @@ CONF.PATH.SCANNET_META = os.path.join(CONF.PATH.SCANNET, "meta_data")
 CONF.PATH.SCANNET_DATA = os.path.join(CONF.PATH.SCANNET, "scannet_data")
 
 # data
-CONF.SCANNET_DIR =  "/mnt/canis/Datasets/ScanNet/public/v2/scans" # TODO change this
+CONF.SCANNET_DIR =  "/mnt/ScanNet/public/v2/scans" # TODO change this
 CONF.SCANNET_FRAMES_ROOT = "/home/davech2y/frames_square/" # TODO change this
 CONF.PROJECTION = "/home/davech2y/multiview_projection_scanrefer" # TODO change this
 CONF.ENET_FEATURES_ROOT = "/home/davech2y/enet_features" # TODO change this
