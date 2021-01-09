@@ -316,6 +316,11 @@ class PointGroup(nn.Module):
             score = self.score_outputlayer(score)
             score_feats = score.features[inp_map.long()] # (sumNPoint, C)
             score_feats = pointgroup_ops.roipool(score_feats, proposals_offset.cuda())  # (nProposal, C)
+            
+            # ScanRefer:
+            # save intermediate result
+            ret['score_feats'] = score_feats
+
             scores = self.score_linear(score_feats)  # (nProposal, 1)
 
             ret['proposal_scores'] = (scores, proposals_idx, proposals_offset)
@@ -398,6 +403,11 @@ def model_fn_decorator(test=False):
         input_ = spconv.SparseConvTensor(voxel_feats, voxel_coords.int(), spatial_shape, cfg.batch_size)
 
         ret = model(input_, p2v_map, coords_float, coords[:, 0].int(), batch_offsets, epoch)
+
+        # ScanRefer:
+        # get intermediate cluster features for each proposal
+        score_feats = ret['score_feats']
+        
         semantic_scores = ret['semantic_scores'] # (N, nClass) float32, cuda
         pt_offsets = ret['pt_offsets']           # (N, 3), float32, cuda
         if(epoch > cfg.prepare_epochs):
@@ -417,6 +427,11 @@ def model_fn_decorator(test=False):
         ##### accuracy / visual_dict / meter_dict
         with torch.no_grad():
             preds = {}
+            
+            # ScanRefer: 
+            # return intermediate cluster feature vectores 
+            preds['score_feats'] = score_feats
+
             preds['semantic'] = semantic_scores
             preds['pt_offsets'] = pt_offsets
             if(epoch > cfg.prepare_epochs):
