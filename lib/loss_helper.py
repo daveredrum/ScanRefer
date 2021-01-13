@@ -195,42 +195,87 @@ def compute_reference_loss(data_dict, config):
         ref_loss, lang_loss, cluster_preds, cluster_labels
     """
 
+    # TODO: compute IoU without bboxes, but the real labeled points with the pred labels for each point
+
+    # NOTE: data_dict["cluster_ref"] are the cluster confidences from the match_module.py
+    #       B := batch_size
+
     # unpack
     cluster_preds = data_dict["cluster_ref"] # (B, num_proposal)
 
     # predicted bbox
-    pred_ref = data_dict['cluster_ref'].detach().cpu().numpy() # (B,)
-    pred_center = data_dict['center'].detach().cpu().numpy() # (B,K,3)
-    pred_heading_class = torch.argmax(data_dict['heading_scores'], -1) # B,num_proposal
-    pred_heading_residual = torch.gather(data_dict['heading_residuals'], 2, pred_heading_class.unsqueeze(-1)) # B,num_proposal,1
-    pred_heading_class = pred_heading_class.detach().cpu().numpy() # B,num_proposal
-    pred_heading_residual = pred_heading_residual.squeeze(2).detach().cpu().numpy() # B,num_proposal
-    pred_size_class = torch.argmax(data_dict['size_scores'], -1) # B,num_proposal
-    pred_size_residual = torch.gather(data_dict['size_residuals'], 2, pred_size_class.unsqueeze(-1).unsqueeze(-1).repeat(1,1,1,3)) # B,num_proposal,1,3
-    pred_size_class = pred_size_class.detach().cpu().numpy()
-    pred_size_residual = pred_size_residual.squeeze(2).detach().cpu().numpy() # B,num_proposal,3
+    #pred_ref = data_dict['cluster_ref'].detach().cpu().numpy() # (B,)
+
+    #pred_center = data_dict['center'].detach().cpu().numpy() # (B,K,3)
+    #pred_heading_class = torch.argmax(data_dict['heading_scores'], -1) # B,num_proposal
+    #pred_heading_residual = torch.gather(data_dict['heading_residuals'], 2, pred_heading_class.unsqueeze(-1)) # B,num_proposal,1
+    #pred_heading_class = pred_heading_class.detach().cpu().numpy() # B,num_proposal
+    #pred_heading_residual = pred_heading_residual.squeeze(2).detach().cpu().numpy() # B,num_proposal
+    #pred_size_class = torch.argmax(data_dict['size_scores'], -1) # B,num_proposal
+    #pred_size_residual = torch.gather(data_dict['size_residuals'], 2, pred_size_class.unsqueeze(-1).unsqueeze(-1).repeat(1,1,1,3)) # B,num_proposal,1,3
+    #pred_size_class = pred_size_class.detach().cpu().numpy()
+    #pred_size_residual = pred_size_residual.squeeze(2).detach().cpu().numpy() # B,num_proposal,3
 
     # ground truth bbox
-    gt_center = data_dict['ref_center_label'].cpu().numpy() # (B,3)
-    gt_heading_class = data_dict['ref_heading_class_label'].cpu().numpy() # B
-    gt_heading_residual = data_dict['ref_heading_residual_label'].cpu().numpy() # B
-    gt_size_class = data_dict['ref_size_class_label'].cpu().numpy() # B
-    gt_size_residual = data_dict['ref_size_residual_label'].cpu().numpy() # B,3
+
+    # TODO: GT-BB needs to be constructed as well --> based on red_center_label, ref_heading_class_label, etc. 
+    #       What are those? => What is given as GT? Based on that I have to do the dynamic labeling 
+
+    #gt_center = data_dict['ref_center_label'].cpu().numpy() # (B,3)
+    #gt_heading_class = data_dict['ref_heading_class_label'].cpu().numpy() # B
+    #gt_heading_residual = data_dict['ref_heading_residual_label'].cpu().numpy() # B
+    #gt_size_class = data_dict['ref_size_class_label'].cpu().numpy() # B
+    #gt_size_residual = data_dict['ref_size_residual_label'].cpu().numpy() # B,3
     # convert gt bbox parameters to bbox corners
-    gt_obb_batch = config.param2obb_batch(gt_center[:, 0:3], gt_heading_class, gt_heading_residual,
-                    gt_size_class, gt_size_residual)
-    gt_bbox_batch = get_3d_box_batch(gt_obb_batch[:, 3:6], gt_obb_batch[:, 6], gt_obb_batch[:, 0:3])
+    #gt_obb_batch = config.param2obb_batch(gt_center[:, 0:3], gt_heading_class, gt_heading_residual,
+    #                gt_size_class, gt_size_residual)
+    #gt_bbox_batch = get_3d_box_batch(gt_obb_batch[:, 3:6], gt_obb_batch[:, 6], gt_obb_batch[:, 0:3])
+
+    # PointGroup: 
+    # QUESTION: will each predicted point remain in one cluster? 
+    # IF SO: I don't need to do IoU calculations I simply have to give the CELoss
+    #        the correct predcited localization confidences.
+    #        Find out more about the localization confidences + how the targets are 
+    #        made for segm. and language.
+    # NOTE: in PG clustering alg. only points of the same class can be in one cluster 
+    preds_segmentation = data_dict['semantic_preds'] # (B, N), long
+    # dim 1 for cluster_id, dim 2 for corresponding point idxs in N
+    preds_instances = data_dict['proposals_idx'] # (B, sumNPoint, 2), int, 
+
+    # GT segmentation 
+    # label creation without using the class labels and real ground thruths
+    # because loc. loss should be independant of obj. class. loss and 
+    # segmentation loss. (+ the same class can appear more than once)
+    # hence we want to compare each cluster with the real cluster to find 
+    # the best cluster. 
+    gt_segmentation = data_dict['labels'] # (B, N)
+    gt_instances = data_dict['instance_labels'] # (B, sumNPoint, 2), int, 
 
     # compute the iou score for all predictd positive ref
     batch_size, num_proposals = cluster_preds.shape
     labels = np.zeros((batch_size, num_proposals))
-    for i in range(pred_ref.shape[0]):
+    for i in range(preds_instances.shape[0]):
         # convert the bbox parameters to bbox corners
-        pred_obb_batch = config.param2obb_batch(pred_center[i, :, 0:3], pred_heading_class[i], pred_heading_residual[i],
-                    pred_size_class[i], pred_size_residual[i])
-        pred_bbox_batch = get_3d_box_batch(pred_obb_batch[:, 3:6], pred_obb_batch[:, 6], pred_obb_batch[:, 0:3])
-        ious = box3d_iou_batch(pred_bbox_batch, np.tile(gt_bbox_batch[i], (num_proposals, 1, 1)))
-        labels[i, ious.argmax()] = 1 # treat the bbox with highest iou score as the gt
+        #pred_obb_batch = config.param2obb_batch(pred_center[i, :, 0:3], pred_heading_class[i], pred_heading_residual[i],
+        #            pred_size_class[i], pred_size_residual[i])
+        #pred_bbox_batch = get_3d_box_batch(pred_obb_batch[:, 3:6], pred_obb_batch[:, 6], pred_obb_batch[:, 0:3])
+        #ious = box3d_iou_batch(pred_bbox_batch, np.tile(gt_bbox_batch[i], (num_proposals, 1, 1)))
+        #labels[i, ious.argmax()] = 1 # treat the bbox with highest iou score as the gt
+
+        # PointGroup: 
+        # GT calculations based on predicted point-lables themselves 
+        # by simply counting the points in common and the total points
+        target_instance = gt_instances[i]
+        # iterate through all proposals an compute their score 
+        # one proposal contains all index numbers of points in the cluster
+        ious = []
+        for proposal in preds_instances[i]:
+            common_points = np.intersect1d(proposal, target_instance)
+            # common elements / total distinct elements in both clusters
+            iou = len(common_points)/(2*len(target_instance)-len(common_points))
+            ious.append(iou)
+        # one-hot-encoding for CELoss as localization loss
+        labels[i, ious.argmax()] = 1
 
     cluster_labels = torch.FloatTensor(labels).cuda()
 
@@ -258,55 +303,59 @@ def get_loss(data_dict, config, detection=True, reference=True, use_lang_classif
         data_dict: dict
     """
 
+    # PointGroup: 
+    # no vote_loss, objectness_loss, box_loss, sem_cls_loss needed anymore
+
     # Vote loss
-    vote_loss = compute_vote_loss(data_dict)
+    #vote_loss = compute_vote_loss(data_dict)
 
     # Obj loss
-    objectness_loss, objectness_label, objectness_mask, object_assignment = compute_objectness_loss(data_dict)
-    num_proposal = objectness_label.shape[1]
-    total_num_proposal = objectness_label.shape[0]*objectness_label.shape[1]
-    data_dict['objectness_label'] = objectness_label
-    data_dict['objectness_mask'] = objectness_mask
-    data_dict['object_assignment'] = object_assignment
-    data_dict['pos_ratio'] = torch.sum(objectness_label.float().cuda())/float(total_num_proposal)
-    data_dict['neg_ratio'] = torch.sum(objectness_mask.float())/float(total_num_proposal) - data_dict['pos_ratio']
+    #objectness_loss, objectness_label, objectness_mask, object_assignment = compute_objectness_loss(data_dict)
+    #num_proposal = objectness_label.shape[1]
+    #total_num_proposal = objectness_label.shape[0]*objectness_label.shape[1]
+    #data_dict['objectness_label'] = objectness_label
+    #data_dict['objectness_mask'] = objectness_mask
+    #data_dict['object_assignment'] = object_assignment
+    #data_dict['pos_ratio'] = torch.sum(objectness_label.float().cuda())/float(total_num_proposal)
+    #data_dict['neg_ratio'] = torch.sum(objectness_mask.float())/float(total_num_proposal) - data_dict['pos_ratio']
 
     # Box loss and sem cls loss
-    center_loss, heading_cls_loss, heading_reg_loss, size_cls_loss, size_reg_loss, sem_cls_loss = compute_box_and_sem_cls_loss(data_dict, config)
-    box_loss = center_loss + 0.1*heading_cls_loss + heading_reg_loss + 0.1*size_cls_loss + size_reg_loss
+    #center_loss, heading_cls_loss, heading_reg_loss, size_cls_loss, size_reg_loss, sem_cls_loss = compute_box_and_sem_cls_loss(data_dict, config)
+    #box_loss = center_loss + 0.1*heading_cls_loss + heading_reg_loss + 0.1*size_cls_loss + size_reg_loss
 
-    if detection:
-        data_dict['vote_loss'] = vote_loss
-        data_dict['objectness_loss'] = objectness_loss
-        data_dict['center_loss'] = center_loss
-        data_dict['heading_cls_loss'] = heading_cls_loss
-        data_dict['heading_reg_loss'] = heading_reg_loss
-        data_dict['size_cls_loss'] = size_cls_loss
-        data_dict['size_reg_loss'] = size_reg_loss
-        data_dict['sem_cls_loss'] = sem_cls_loss
-        data_dict['box_loss'] = box_loss
-    else:
-        data_dict['vote_loss'] = torch.zeros(1)[0].cuda()
-        data_dict['objectness_loss'] = torch.zeros(1)[0].cuda()
-        data_dict['center_loss'] = torch.zeros(1)[0].cuda()
-        data_dict['heading_cls_loss'] = torch.zeros(1)[0].cuda()
-        data_dict['heading_reg_loss'] = torch.zeros(1)[0].cuda()
-        data_dict['size_cls_loss'] = torch.zeros(1)[0].cuda()
-        data_dict['size_reg_loss'] = torch.zeros(1)[0].cuda()
-        data_dict['sem_cls_loss'] = torch.zeros(1)[0].cuda()
-        data_dict['box_loss'] = torch.zeros(1)[0].cuda()
+    #if detection:
+    #    data_dict['vote_loss'] = vote_loss
+    #    data_dict['objectness_loss'] = objectness_loss
+    #    data_dict['center_loss'] = center_loss
+    #    data_dict['heading_cls_loss'] = heading_cls_loss
+    #    data_dict['heading_reg_loss'] = heading_reg_loss
+    #    data_dict['size_cls_loss'] = size_cls_loss
+    #    data_dict['size_reg_loss'] = size_reg_loss
+    #    data_dict['sem_cls_loss'] = sem_cls_loss
+    #    data_dict['box_loss'] = box_loss
+    #else:
+    #    data_dict['vote_loss'] = torch.zeros(1)[0].cuda()
+    #    data_dict['objectness_loss'] = torch.zeros(1)[0].cuda()
+    #    data_dict['center_loss'] = torch.zeros(1)[0].cuda()
+    #    data_dict['heading_cls_loss'] = torch.zeros(1)[0].cuda()
+    #    data_dict['heading_reg_loss'] = torch.zeros(1)[0].cuda()
+    #    data_dict['size_cls_loss'] = torch.zeros(1)[0].cuda()
+    #    data_dict['size_reg_loss'] = torch.zeros(1)[0].cuda()
+    #    data_dict['sem_cls_loss'] = torch.zeros(1)[0].cuda()
+    #    data_dict['box_loss'] = torch.zeros(1)[0].cuda()
 
     if reference:
         # Reference loss
         ref_loss, _, cluster_labels = compute_reference_loss(data_dict, config)
-        data_dict["cluster_labels"] = cluster_labels
+        #data_dict["cluster_labels"] = cluster_labels
         data_dict["ref_loss"] = ref_loss
     else:
         # # Reference loss
         # ref_loss, _, cluster_labels = compute_reference_loss(data_dict, config)
         # data_dict["cluster_labels"] = cluster_labels
-        data_dict["cluster_labels"] = objectness_label.new_zeros(objectness_label.shape).cuda()
-        data_dict["cluster_ref"] = objectness_label.new_zeros(objectness_label.shape).float().cuda()
+
+        #data_dict["cluster_ref"] = objectness_label.new_zeros(objectness_label.shape).float().cuda()
+        #data_dict["cluster_labels"] = objectness_label.new_zeros(objectness_label.shape).cuda()
 
         # store
         data_dict["ref_loss"] = torch.zeros(1)[0].cuda()
@@ -317,9 +366,15 @@ def get_loss(data_dict, config, detection=True, reference=True, use_lang_classif
         data_dict["lang_loss"] = torch.zeros(1)[0].cuda()
 
     # Final loss function
-    loss = data_dict['vote_loss'] + 0.5*data_dict['objectness_loss'] + data_dict['box_loss'] + 0.1*data_dict['sem_cls_loss'] \
-        + 0.1*data_dict["ref_loss"] + 0.1*data_dict["lang_loss"]
-    
+    #loss = data_dict['vote_loss'] + 0.5*data_dict['objectness_loss'] + data_dict['box_loss'] + 0.1*data_dict['sem_cls_loss'] \
+    #    + 0.1*data_dict["ref_loss"] + 0.1*data_dict["lang_loss"]
+
+    # PointGroup:
+    # only the last two losses are needed
+    # add the loss calculated during the RefNet.forward by calling pointgroup.model_fn
+    # TODO: weight set to 0.8 for now (so that weights sum up to 1)
+    loss = 0.1*data_dict["ref_loss"] + 0.1*data_dict["lang_loss"] + 0.8 * data_dict['pg_loss']
+
     loss *= 10 # amplify
 
     data_dict['loss'] = loss

@@ -272,6 +272,10 @@ class PointGroup(nn.Module):
         semantic_scores = self.linear(output_feats)   # (N, nClass), float
         semantic_preds = semantic_scores.max(1)[1]    # (N), long
 
+        # ScanRefer: 
+        # semantic_preds are needed in loss calculation, loss_helper.py
+        ret['semantic_preds'] = semantic_preds
+
         ret['semantic_scores'] = semantic_scores
 
         #### offset
@@ -307,6 +311,10 @@ class PointGroup(nn.Module):
             proposals_offset_shift += proposals_offset[-1]
             proposals_idx = torch.cat((proposals_idx, proposals_idx_shift), dim=0)
             proposals_offset = torch.cat((proposals_offset, proposals_offset_shift[1:]))
+
+            # ScanRefer: 
+            # predicted instances are needed in loss calculation in loss_helper.py
+            ret['proposals_idx'] = proposals_idx
 
             #### proposals voxelization again
             input_feats, inp_map = self.clusters_voxelization(proposals_idx, proposals_offset, output_feats, coords, self.score_fullscale, self.score_scale, self.mode)

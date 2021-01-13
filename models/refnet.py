@@ -134,12 +134,15 @@ class RefNet(nn.Module):
         #       - EXTRA: epoch = batch['epoch']
 
         # loss, visual_dict, meter_dict not necessary here
-        # forwarding to downstream app?
-        _, preds, _, _ = model_fn(data_dict, self.pointgroup(), data_dict['epoch'])
+        # TODO: forwarding to downstream app?
+        loss, preds, _, _ = model_fn(data_dict, self.pointgroup(), data_dict['epoch'])
+
         # preds['score_feats'] has to be of dim.: [batch_size, num_proposal, 128]
-        # that means in PointGroup.forward: dim. C = 128
         assert(preds['score_feats'].shape[-1] == 128)
+
         data_dict['aggregated_vote_features'] = preds['score_feats']
+        # forward loss 
+        data_dict['pg_loss'] = loss
 
         if not self.no_reference:
             #######################################

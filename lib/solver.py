@@ -20,7 +20,7 @@ from lib.eval_helper import get_eval
 from utils.eta import decode_eta
 from lib.pointnet2.pytorch_utils import BNMomentumScheduler
 
-
+# TODO: check if objectness, vote, box loss need to be removed here too
 ITER_REPORT_TEMPLATE = """
 -------------------------------iter: [{epoch_id}: {iter_id}/{total_iter}]-------------------------------
 [loss] train_loss: {train_loss}
@@ -273,9 +273,12 @@ class Solver():
         # dump
         self._running_log["ref_loss"] = data_dict["ref_loss"]
         self._running_log["lang_loss"] = data_dict["lang_loss"]
-        self._running_log["objectness_loss"] = data_dict["objectness_loss"]
-        self._running_log["vote_loss"] = data_dict["vote_loss"]
-        self._running_log["box_loss"] = data_dict["box_loss"]
+
+        # PointGroup: 
+        # no objectness loss, vote loss and box loss
+        #self._running_log["objectness_loss"] = data_dict["objectness_loss"]
+        #self._running_log["vote_loss"] = data_dict["vote_loss"]
+        #self._running_log["box_loss"] = data_dict["box_loss"]
         self._running_log["loss"] = data_dict["loss"]
 
     def _eval(self, data_dict):
@@ -354,10 +357,14 @@ class Solver():
             self.log[phase]["loss"].append(self._running_log["loss"].item())
             self.log[phase]["ref_loss"].append(self._running_log["ref_loss"].item())
             self.log[phase]["lang_loss"].append(self._running_log["lang_loss"].item())
-            self.log[phase]["objectness_loss"].append(self._running_log["objectness_loss"].item())
-            self.log[phase]["vote_loss"].append(self._running_log["vote_loss"].item())
-            self.log[phase]["box_loss"].append(self._running_log["box_loss"].item())
 
+            # PointGroup: 
+            # no objectness_loss, vote_loss and box_loss
+            #self.log[phase]["objectness_loss"].append(self._running_log["objectness_loss"].item())
+            #self.log[phase]["vote_loss"].append(self._running_log["vote_loss"].item())
+            #self.log[phase]["box_loss"].append(self._running_log["box_loss"].item())
+
+            # TODO: check if obj_acc needs to be changed 
             self.log[phase]["lang_acc"].append(self._running_log["lang_acc"])
             self.log[phase]["ref_acc"].append(self._running_log["ref_acc"])
             self.log[phase]["obj_acc"].append(self._running_log["obj_acc"])
@@ -402,9 +409,14 @@ class Solver():
                 self.best["loss"] = np.mean(self.log[phase]["loss"])
                 self.best["ref_loss"] = np.mean(self.log[phase]["ref_loss"])
                 self.best["lang_loss"] = np.mean(self.log[phase]["lang_loss"])
-                self.best["objectness_loss"] = np.mean(self.log[phase]["objectness_loss"])
-                self.best["vote_loss"] = np.mean(self.log[phase]["vote_loss"])
-                self.best["box_loss"] = np.mean(self.log[phase]["box_loss"])
+                
+                # PointGroup: 
+                # no objectness_loss, vote_loss and box_loss
+                #self.best["objectness_loss"] = np.mean(self.log[phase]["objectness_loss"])
+                #self.best["vote_loss"] = np.mean(self.log[phase]["vote_loss"])
+                #self.best["box_loss"] = np.mean(self.log[phase]["box_loss"])
+
+                # TODO: check if obj_acc needs to changed
                 self.best["lang_acc"] = np.mean(self.log[phase]["lang_acc"])
                 self.best["ref_acc"] = np.mean(self.log[phase]["ref_acc"])
                 self.best["obj_acc"] = np.mean(self.log[phase]["obj_acc"])
@@ -476,9 +488,14 @@ class Solver():
             train_loss=round(np.mean([v for v in self.log["train"]["loss"]]), 5),
             train_ref_loss=round(np.mean([v for v in self.log["train"]["ref_loss"]]), 5),
             train_lang_loss=round(np.mean([v for v in self.log["train"]["lang_loss"]]), 5),
-            train_objectness_loss=round(np.mean([v for v in self.log["train"]["objectness_loss"]]), 5),
-            train_vote_loss=round(np.mean([v for v in self.log["train"]["vote_loss"]]), 5),
-            train_box_loss=round(np.mean([v for v in self.log["train"]["box_loss"]]), 5),
+
+            # PointGroup: 
+            # no objectness_loss, vote_loss and box_loss
+            #train_objectness_loss=round(np.mean([v for v in self.log["train"]["objectness_loss"]]), 5),
+            #train_vote_loss=round(np.mean([v for v in self.log["train"]["vote_loss"]]), 5),
+            #train_box_loss=round(np.mean([v for v in self.log["train"]["box_loss"]]), 5),
+            
+            # TODO: check if obj_acc needs to be changed
             train_lang_acc=round(np.mean([v for v in self.log["train"]["lang_acc"]]), 5),
             train_ref_acc=round(np.mean([v for v in self.log["train"]["ref_acc"]]), 5),
             train_obj_acc=round(np.mean([v for v in self.log["train"]["obj_acc"]]), 5),
@@ -503,11 +520,17 @@ class Solver():
             train_loss=round(np.mean([v for v in self.log["train"]["loss"]]), 5),
             train_ref_loss=round(np.mean([v for v in self.log["train"]["ref_loss"]]), 5),
             train_lang_loss=round(np.mean([v for v in self.log["train"]["lang_loss"]]), 5),
-            train_objectness_loss=round(np.mean([v for v in self.log["train"]["objectness_loss"]]), 5),
-            train_vote_loss=round(np.mean([v for v in self.log["train"]["vote_loss"]]), 5),
-            train_box_loss=round(np.mean([v for v in self.log["train"]["box_loss"]]), 5),
+
+            # PointGroup: 
+            # no objectness_loss, vote_loss and box_loss
+            #train_objectness_loss=round(np.mean([v for v in self.log["train"]["objectness_loss"]]), 5),
+            #train_vote_loss=round(np.mean([v for v in self.log["train"]["vote_loss"]]), 5),
+            #train_box_loss=round(np.mean([v for v in self.log["train"]["box_loss"]]), 5),
+
             train_lang_acc=round(np.mean([v for v in self.log["train"]["lang_acc"]]), 5),
             train_ref_acc=round(np.mean([v for v in self.log["train"]["ref_acc"]]), 5),
+
+            # TODO: check if obj_acc is needed
             train_obj_acc=round(np.mean([v for v in self.log["train"]["obj_acc"]]), 5),
             train_pos_ratio=round(np.mean([v for v in self.log["train"]["pos_ratio"]]), 5),
             train_neg_ratio=round(np.mean([v for v in self.log["train"]["neg_ratio"]]), 5),
@@ -516,11 +539,17 @@ class Solver():
             val_loss=round(np.mean([v for v in self.log["val"]["loss"]]), 5),
             val_ref_loss=round(np.mean([v for v in self.log["val"]["ref_loss"]]), 5),
             val_lang_loss=round(np.mean([v for v in self.log["val"]["lang_loss"]]), 5),
-            val_objectness_loss=round(np.mean([v for v in self.log["val"]["objectness_loss"]]), 5),
-            val_vote_loss=round(np.mean([v for v in self.log["val"]["vote_loss"]]), 5),
-            val_box_loss=round(np.mean([v for v in self.log["val"]["box_loss"]]), 5),
+
+            # PointGroup: 
+            # no objectness_loss, vote_loss and box_loss
+            #val_objectness_loss=round(np.mean([v for v in self.log["val"]["objectness_loss"]]), 5),
+            #val_vote_loss=round(np.mean([v for v in self.log["val"]["vote_loss"]]), 5),
+            #val_box_loss=round(np.mean([v for v in self.log["val"]["box_loss"]]), 5),
+
             val_lang_acc=round(np.mean([v for v in self.log["val"]["lang_acc"]]), 5),
             val_ref_acc=round(np.mean([v for v in self.log["val"]["ref_acc"]]), 5),
+
+            # TODO: check if obj_acc is needed
             val_obj_acc=round(np.mean([v for v in self.log["val"]["obj_acc"]]), 5),
             val_pos_ratio=round(np.mean([v for v in self.log["val"]["pos_ratio"]]), 5),
             val_neg_ratio=round(np.mean([v for v in self.log["val"]["neg_ratio"]]), 5),
@@ -536,11 +565,17 @@ class Solver():
             loss=round(self.best["loss"], 5),
             ref_loss=round(self.best["ref_loss"], 5),
             lang_loss=round(self.best["lang_loss"], 5),
-            objectness_loss=round(self.best["objectness_loss"], 5),
-            vote_loss=round(self.best["vote_loss"], 5),
-            box_loss=round(self.best["box_loss"], 5),
+
+            # PointGroup: 
+            # no objectness_loss, vote_loss and box_loss
+            #objectness_loss=round(self.best["objectness_loss"], 5),
+            #vote_loss=round(self.best["vote_loss"], 5),
+            #box_loss=round(self.best["box_loss"], 5),
+
             lang_acc=round(self.best["lang_acc"], 5),
             ref_acc=round(self.best["ref_acc"], 5),
+
+            # TODO: check if obj_acc is needed
             obj_acc=round(self.best["obj_acc"], 5),
             pos_ratio=round(self.best["pos_ratio"], 5),
             neg_ratio=round(self.best["neg_ratio"], 5),
