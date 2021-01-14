@@ -10,8 +10,8 @@ sys.path.append(os.path.join(os.getcwd(), "lib")) # HACK add the lib folder
 #from models.proposal_module import ProposalModule
 
 # new segemnation pipeline - PointGroup
-from model.pointgroup.pointgroup import PointGroup 
-from model.pointgroup.pointgroup import model_fn_decorator
+from models.pointgroup import PointGroup
+from models.pointgroup import model_fn_decorator
 from util.config import cfg
 
 from models.lang_module import LangModule
@@ -135,6 +135,7 @@ class RefNet(nn.Module):
 
         # loss, visual_dict, meter_dict not necessary here
         # TODO: forwarding to downstream app?
+        model_fn = model_fn_decorator()
         loss, preds, _, _ = model_fn(data_dict, self.pointgroup(), data_dict['epoch'])
 
         # preds['score_feats'] has to be of dim.: [batch_size, num_proposal, 128]
