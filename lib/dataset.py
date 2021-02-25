@@ -68,6 +68,8 @@ class ScannetReferenceDataset(Dataset):
         lang_feat = self.lang[scene_id][str(object_id)][ann_id]
         lang_len = len(self.scanrefer[idx]["token"])
         lang_len = lang_len if lang_len <= CONF.TRAIN.MAX_DES_LEN else CONF.TRAIN.MAX_DES_LEN
+        # lang_len = len(self.scanrefer[idx]["token"]) + 2
+        # lang_len = lang_len if lang_len <= CONF.TRAIN.MAX_DES_LEN + 2 else CONF.TRAIN.MAX_DES_LEN + 2
 
         # get pc
         mesh_vertices = self.scene_data[scene_id]["mesh_vertices"]
@@ -333,6 +335,8 @@ class ScannetReferenceDataset(Dataset):
             # tokenize the description
             tokens = data["token"]
             embeddings = np.zeros((CONF.TRAIN.MAX_DES_LEN, 300))
+            # tokens = ["sos"] + tokens + ["eos"]
+            # embeddings = np.zeros((CONF.TRAIN.MAX_DES_LEN + 2, 300))
             for token_id in range(CONF.TRAIN.MAX_DES_LEN):
                 if token_id < len(tokens):
                     token = tokens[token_id]
