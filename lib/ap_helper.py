@@ -72,7 +72,8 @@ def parse_predictions(end_points, config_dict):
     # assume upright_camera coord.
     bsize = pred_center.shape[0]
     pred_corners_3d_upright_camera = np.zeros((bsize, num_proposal, 8, 3))
-    pred_center_upright_camera = flip_axis_to_camera(pred_center.detach().cpu().numpy())
+    # pred_center_upright_camera = flip_axis_to_camera(pred_center.detach().cpu().numpy())
+    pred_center_upright_camera = pred_center.detach().cpu().numpy()
     for i in range(bsize):
         for j in range(num_proposal):
             heading_angle = config_dict['dataset_config'].class2angle(\
@@ -93,7 +94,7 @@ def parse_predictions(end_points, config_dict):
             pc = batch_pc[i,:,:] # (N,3)
             for j in range(K):
                 box3d = pred_corners_3d_upright_camera[i,j,:,:] # (8,3)
-                box3d = flip_axis_to_depth(box3d)
+                # box3d = flip_axis_to_depth(box3d)
                 pc_in_box,inds = extract_pc_in_box3d(pc, box3d)
                 if len(pc_in_box) < 5:
                     nonempty_box_mask[i,j] = 0
@@ -204,7 +205,8 @@ def parse_groundtruths(end_points, config_dict):
 
     K2 = center_label.shape[1] # K2==MAX_NUM_OBJ
     gt_corners_3d_upright_camera = np.zeros((bsize, K2, 8, 3))
-    gt_center_upright_camera = flip_axis_to_camera(center_label[:,:,0:3].detach().cpu().numpy())
+    # gt_center_upright_camera = flip_axis_to_camera(center_label[:,:,0:3].detach().cpu().numpy())
+    gt_center_upright_camera = center_label[:,:,0:3].detach().cpu().numpy()
     for i in range(bsize):
         for j in range(K2):
             if box_label_mask[i,j] == 0: continue
