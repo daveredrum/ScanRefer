@@ -12,6 +12,7 @@ lib/__pycache__
 lib/pointnet2/__pycache__
 models/__pycache__
 utils/__pycache__
+.DS_Store
 
 # pointnet2
 lib/pointnet2/build/
