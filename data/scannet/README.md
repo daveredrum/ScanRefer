@@ -4,7 +4,7 @@ To acquire the access to ScanNet dataset, Please refer to the [ScanNet project p
 
 ```shell
 python2 download-scannet.py -o data/scannet --type _vh_clean_2.ply
-python2 download-scannet.py -o data/scannet --type _vh_clean.aggregation.json
+python2 download-scannet.py -o data/scannet --type .aggregation.json
 python2 download-scannet.py -o data/scannet --type _vh_clean_2.0.010000.segs.json
 python2 download-scannet.py -o data/scannet --type .txt
 ```
