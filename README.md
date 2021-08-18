@@ -282,7 +282,7 @@ If you would like to try out the pre-trained models, please download the model w
 
 If you use the ScanRefer data or code in your work, please kindly cite our work and the original ScanNet paper:
 
-```
+```bibtex
 @inproceedings{chen2020scanrefer,
     title={Scanrefer: 3d object localization in rgb-d scans using natural language},
     author={Chen, Dave Zhenyu and Chang, Angel X and Nie{\ss}ner, Matthias},
