@@ -283,11 +283,13 @@ If you would like to try out the pre-trained models, please download the model w
 If you use the ScanRefer data or code in your work, please kindly cite our work and the original ScanNet paper:
 
 ```
-@article{chen2020scanrefer,
-    title={ScanRefer: 3D Object Localization in RGB-D Scans using Natural Language},
+@inproceedings{chen2020scanrefer,
+    title={Scanrefer: 3d object localization in rgb-d scans using natural language},
     author={Chen, Dave Zhenyu and Chang, Angel X and Nie{\ss}ner, Matthias},
-    journal={16th European Conference on Computer Vision (ECCV)},
-    year={2020}
+    booktitle={Computer Vision--ECCV 2020: 16th European Conference, Glasgow, UK, August 23--28, 2020, Proceedings, Part XX 16},
+    pages={202--221},
+    year={2020},
+    organization={Springer}
 }
 
 @inproceedings{dai2017scannet,
