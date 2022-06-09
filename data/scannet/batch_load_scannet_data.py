@@ -7,11 +7,11 @@ Usage example: python ./batch_load_scannet_data.py
 """
 
 import os
-import sys
 import datetime
 import numpy as np
 from load_scannet_data import export
-import pdb
+from multiprocessing import Pool
+
 
 SCANNET_DIR = 'scans'
 SCAN_NAMES = sorted([line.rstrip() for line in open('meta_data/scannetv2.txt')])
@@ -21,7 +21,8 @@ OBJ_CLASS_IDS = np.array([3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 1
 MAX_NUM_POINT = 50000
 OUTPUT_FOLDER = './scannet_data'
 
-def export_one_scan(scan_name, output_filename_prefix):    
+def export_one_scan(scan_name):
+    output_filename_prefix = os.path.join(OUTPUT_FOLDER, scan_name)
     mesh_file = os.path.join(SCANNET_DIR, scan_name, scan_name + '_vh_clean_2.ply')
     agg_file = os.path.join(SCANNET_DIR, scan_name, scan_name + '.aggregation.json')
     seg_file = os.path.join(SCANNET_DIR, scan_name, scan_name + '_vh_clean_2.0.010000.segs.json')
@@ -64,21 +65,13 @@ def export_one_scan(scan_name, output_filename_prefix):
     np.save(output_filename_prefix+'_aligned_bbox.npy', aligned_instance_bboxes)
 
 def batch_export():
+
     if not os.path.exists(OUTPUT_FOLDER):
         print('Creating new data folder: {}'.format(OUTPUT_FOLDER))                
         os.mkdir(OUTPUT_FOLDER)        
-        
-    for scan_name in SCAN_NAMES:
-        output_filename_prefix = os.path.join(OUTPUT_FOLDER, scan_name)
-        # if os.path.exists(output_filename_prefix + '_vert.npy'): continue
-        
-        print('-'*20+'begin')
-        print(datetime.datetime.now())
-        print(scan_name)
-              
-        export_one_scan(scan_name, output_filename_prefix)
-             
-        print('-'*20+'done')
+    
+    with Pool() as pool:
+        pool.map(export_one_scan, SCAN_NAMES)
 
 if __name__=='__main__':    
     batch_export()
