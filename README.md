@@ -13,6 +13,23 @@ For additional detail, please see the ScanRefer paper:
 by [Dave Zhenyu Chen](https://www.niessnerlab.org/members/zhenyu_chen/profile.html), [Angel X. Chang](https://angelxuanchang.github.io/) and [Matthias Nießner](https://www.niessnerlab.org/members/matthias_niessner/profile.html)  
 from [Technical University of Munich](https://www.tum.de/en/) and [Simon Fraser University](https://www.sfu.ca/).
 
+## Changelog
+01/20/2023: Released annotated viewpoints for descriptions!.
+
+11/11/2020: Updated paper with the improved results due to bug fixing.
+
+11/05/2020: Released pre-trained weights.
+
+08/08/2020: Fixed the issue with `lib/box_util.py`.
+
+08/03/2020: Fixed the issue with `lib/solver.py` and `script/eval.py`.
+
+06/16/2020: Fixed the issue with multiview features.
+
+01/31/2020: Fixed the issue with bad tokens.
+
+01/21/2020: Released the ScanRefer dataset.
+
 ## :star2: Benchmark Challenge :star2:
 We provide the ScanRefer Benchmark Challenge for benchmarking your model automatically on the hidden test set! Learn more at our [benchmark challenge website](http://kaldir.vc.in.tum.de/scanrefer_benchmark/).
 After finishing training the model, please download [the benchmark data](http://kaldir.vc.in.tum.de/scanrefer_benchmark_data.zip) and put the unzipped `ScanRefer_filtered_test.json` under `data/`. Then, you can run the following script the generate predictions:
@@ -41,6 +58,24 @@ wget <download_link>
 "ann_id": [description id, e.g. "1"],
 "description": [...],
 "token": [a list of tokens from the tokenized description] 
+```
+
+## :star2: Annotated viewpoints :star2:
+
+You can now download the viewpoints via [this link](http://kaldir.vc.in.tum.de/annotated_cameras.zip). Once you've downloaded the dataset, you can also play around the viewpoints that are recorded during annotation.
+
+### Viewpoint format
+```
+"scene_id": [ScanNet scene id, e.g. "scene0000_00"],
+"object_id": [ScanNet object id (corresponds to "objectId" in ScanNet aggregation file), e.g. "34"],
+"object_name": [ScanNet object name (corresponds to "label" in ScanNet aggregation file), e.g. "coffee_table"],
+"ann_id": [description id, e.g. "1"],
+"id": "<scene_id>-<object_id>_<ann_id>"
+"camera": {
+    "position": [...] # camera position in the original ScanNet scene
+    "rotation": [...] # camera rotation in the original ScanNet scene
+    "lookat": [...] # the location that the camera is currently pointing at
+}
 ```
 
 ## Setup
@@ -262,21 +297,6 @@ For reproducing our results in the paper, we provide the following training comm
 </table>
 
 If you would like to try out the pre-trained models, please download the model weights and extract the folder to `outputs/`. Note that the results are higher than before because of a few iterations of code refactoring and bug fixing.
-
-## Changelog
-11/11/2020: Updated paper with the improved results due to bug fixing.
-
-11/05/2020: Released pre-trained weights.
-
-08/08/2020: Fixed the issue with `lib/box_util.py`.
-
-08/03/2020: Fixed the issue with `lib/solver.py` and `script/eval.py`.
-
-06/16/2020: Fixed the issue with multiview features.
-
-01/31/2020: Fixed the issue with bad tokens.
-
-01/21/2020: Released the ScanRefer dataset.
 
 ## Citation
 
