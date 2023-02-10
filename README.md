@@ -62,7 +62,7 @@ wget <download_link>
 
 ## :star2: Annotated viewpoints :star2:
 
-You can now download the viewpoints via [this link](http://kaldir.vc.in.tum.de/annotated_cameras.zip). Once you've downloaded the dataset, you can also play around the viewpoints that are recorded during annotation.
+You can now download the viewpoints via <a href="http://kaldir.vc.in.tum.de/annotated_cameras.zip" target="_blank">this link</a>. Once you've downloaded the dataset, you can also play around the viewpoints that are recorded during annotation.
 
 ### Viewpoint format
 ```
